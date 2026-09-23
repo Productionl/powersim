@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>马力机模拟器</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: #0f172a; background: #f8fafc;
+  }
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  header {
+    padding: 11px 18px; background: #0f172a; color: #fff;
+    display: flex; align-items: baseline; gap: 12px; flex: none;
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  header .sub { font-size: 12px; color: #94a3b8; }
+  .workspace { padding: 14px; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; }
+  .sidebar {
+    width: 210px; flex: none; display: flex; flex-direction: column; gap: 8px;
+    position: sticky; top: 60px; max-height: calc(100vh - 74px); overflow: auto;
+  }
+  .main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  #tabList { display: flex; flex-direction: column; gap: 6px; }
+  .tab-item {
+    display: flex; align-items: center; gap: 4px; padding: 6px 8px;
+    border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer;
+  }
+  .tab-item:hover { border-color: #cbd5e1; }
+  .tab-item.active { border-color: #2563eb; background: #eff6ff; }
+  .tab-name {
+    flex: 1; min-width: 0; font-size: 13px; padding-left: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tab-rename {
+    flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 2px 4px;
+    border: 1px solid #2563eb; border-radius: 4px; outline: none;
+  }
+  .tab-btn {
+    flex: none; display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: #94a3b8;
+    padding: 4px; border-radius: 4px; cursor: pointer;
+  }
+  .tab-btn:hover { background: #f1f5f9; color: #0f172a; }
+  .tab-btn.del:hover { color: #dc2626; }
+  .tab-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .tab-btn:disabled:hover { background: transparent; color: #94a3b8; }
+  .mi {
+    display: inline-block; width: 16px; height: 16px; flex: none;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+    -webkit-mask-size: contain; mask-size: contain;
+  }
+  @supports ((-webkit-mask-image: url("")) or (mask-image: url(""))) {
+    .mi { background-color: currentColor; }
+  }
+  .mi-download {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAg0lEQVR4Ae3VwQ2AQAhEUcqxCHukTAuwANw78TAxEdj8n3Cfd8K2iYgolNsfAABACgCA2QAAAAD4x0cVwnk9IiePr0WktPH1iJQwvhBxrTvsvXPdLYyvQwwYLyCE8R0R+vhmCH18J4QwfgTCbUgujB+BcBua9xlPRPHz6QHQDgAREdEDTxqBHrE2WWkAAAAASUVORK5CYII=");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAg0lEQVR4Ae3VwQ2AQAhEUcqxCHukTAuwANw78TAxEdj8n3Cfd8K2iYgolNsfAABACgCA2QAAAAD4x0cVwnk9IiePr0WktPH1iJQwvhBxrTvsvXPdLYyvQwwYLyCE8R0R+vhmCH18J4QwfgTCbUgujB+BcBua9xlPRPHz6QHQDgAREdEDTxqBHrE2WWkAAAAASUVORK5CYII=");
+  }
+  .mi-delete {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAeklEQVR4AezPwQkAIAwEQTu2/1e0BCGoJMzC/W+GJLVp7sXhZuXz3xDxePkAANSzuDwAgGqAVIUAAAAAAAAAAAAAAAAAAABrn2nYob9ODw/spqEHZtPDAwZA/JsGjn8PxDIMdAIG0Jj4TCWHrwdiBYYhB0bBKBgFowAAjZ/e6L/vh1sAAAAASUVORK5CYII=");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAeklEQVR4AezPwQkAIAwEQTu2/1e0BCGoJMzC/W+GJLVp7sXhZuXz3xDxePkAANSzuDwAgGqAVIUAAAAAAAAAAAAAAAAAAABrn2nYob9ODw/spqEHZtPDAwZA/JsGjn8PxDIMdAIG0Jj4TCWHrwdiBYYhB0bBKBgFowAAjZ/e6L/vh1sAAAAASUVORK5CYII=");
+  }
+  .sidebar-actions { display: flex; gap: 6px; }
+  .sidebar-actions button {
+    flex: 1; padding: 7px 4px; border: 1px dashed #cbd5e1; border-radius: 8px;
+    background: #fff; color: #475569; cursor: pointer; font-size: 12px;
+  }
+  .sidebar-actions button:hover { border-color: #2563eb; color: #2563eb; }
+  #chart {
+    position: relative; width: 100%; height: 560px;
+    min-height: 320px; background: #fff;
+    border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
+    resize: vertical;
+  }
+  .modal-mask {
+    position: fixed; inset: 0; background: rgba(15,23,42,.45);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 10px; padding: 18px 20px; width: 320px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.25);
+  }
+  .modal p { margin: 0 0 14px; font-size: 14px; line-height: 1.5; }
+  .modal .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+  .modal .modal-actions button { width: 100%; }
+  body.dragging-file::after {
+    content: "松开以导入 JSON 工作文件";
+    position: fixed; inset: 8px; border: 2px dashed #2563eb; border-radius: 12px;
+    background: rgba(37,99,235,.06); color: #1d4ed8; font-size: 15px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 60;
+  }
+  #chart::-webkit-resizer {
+    background:
+      linear-gradient(135deg, transparent 0 50%, #94a3b8 50% 60%, transparent 60% 70%, #94a3b8 70% 80%, transparent 80%);
+    border-radius: 0 0 8px 0;
+  }
+  .panel {
+    width: 100%; display: grid; align-items: start; gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 14px; min-width: 0;
+  }
+  .card > h2.section:first-child { margin-top: 0; }
+  .table-wrap { max-height: 320px; overflow: auto; }
+  .tip {
+    position: absolute; display: none; pointer-events: none; z-index: 10;
+    background: rgba(15,23,42,.93); color: #fff; font-size: 11px; line-height: 1.55;
+    padding: 6px 9px; border-radius: 6px; white-space: nowrap;
+  }
+  textarea {
+    width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+    padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;
+  }
+  button {
+    font: inherit; font-size: 13px; padding: 7px 12px; border: 1px solid #cbd5e1;
+    background: #fff; border-radius: 6px; cursor: pointer; color: #0f172a;
+  }
+  button:hover { background: #f1f5f9; }
+  button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+  button.primary:hover { background: #1d4ed8; }
+  button.danger { color: #b91c1c; border-color: #fecaca; }
+  .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; }
+  .chk { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 10px; }
+  #psMin, #psMax, #rpmMin, #rpmMax, #snapStep {
+    width: 74px; font: inherit; font-size: 13px; padding: 4px 6px;
+    border: 1px solid #cbd5e1; border-radius: 6px; text-align: right;
+  }
+  .prompt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+  label.pf { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #64748b; }
+  label.pf input, label.pf select {
+    width: 100%; font: inherit; font-size: 13px; padding: 6px 8px;
+    border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; background: #fff;
+  }
+  .prompt-out {
+    width: 100%; margin-top: 8px; font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px; line-height: 1.5; padding: 8px; resize: vertical;
+    border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #0f172a;
+  }
+  h2.section {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: #64748b; margin: 18px 0 6px; font-weight: 700;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid #eef2f7; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: #64748b; font-weight: 600; }
+  input.cell {
+    width: 100%; min-width: 54px; text-align: right; font: inherit; font-size: 12px;
+    padding: 3px 5px; border: 1px solid transparent; border-radius: 4px;
+    background: transparent; color: #0f172a; -moz-appearance: textfield;
+  }
+  input.cell::-webkit-outer-spin-button,
+  input.cell::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input.cell:hover { border-color: #e2e8f0; }
+  input.cell:focus { border-color: #2563eb; background: #fff; outline: none; }
+  button.x {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 5px; border: none; background: transparent; color: #94a3b8;
+  }
+  button.x:hover { color: #dc2626; background: transparent; }
+  .muted { color: #94a3b8; text-align: center; }
+  .hint { font-size: 11px; color: #94a3b8; line-height: 1.7; margin-top: 10px; }
+  .msg { font-size: 12px; margin-top: 8px; }
+  .msg.ok { color: #15803d; }
+  .msg.err { color: #dc2626; }
+  .msg ul { margin: 4px 0 0; padding-left: 16px; }
+
+  svg { display: block; }
+  .grid line { stroke: #eef2f7; pointer-events: none; }
+  .axis line { stroke: #cbd5e1; pointer-events: none; }
+  .axis text { fill: #64748b; font-size: 11px; pointer-events: none; }
+  .axis-title { fill: #475569; font-size: 11px; font-weight: 600; pointer-events: none; }
+  .curve { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+  .curve-nm { stroke: #2563eb; }
+  .curve-ps { stroke: #ea580c; }
+  .hit {
+    fill: none; stroke: #000; stroke-opacity: 0; stroke-width: 16;
+    pointer-events: stroke; cursor: crosshair; touch-action: none;
+  }
+  .handle { stroke-width: 2; }
+  .handle-nm { fill: #fff; stroke: #2563eb; }
+  .handle-ps { fill: #fff; stroke: #ea580c; }
+  .handle-hit { fill: transparent; pointer-events: all; cursor: grab; touch-action: none; }
+  .handle-g:hover .handle { fill: #dbeafe; }
+  .legend { pointer-events: none; }
+  .legend text { fill: #475569; font-size: 11px; }
+  .legend line { stroke-width: 2.5; }
+  .peak-line { stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 6 4; pointer-events: none; }
+  .peak-label {
+    font-size: 11px; font-weight: 700; pointer-events: none;
+    paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round;
+  }
+  .peak-label-ps { fill: #ea580c; }
+  .peak-label-nm { fill: #2563eb; }
+  .cross-line { stroke: #0f172a; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
+  .cross-dot { stroke: #fff; stroke-width: 2; pointer-events: none; }
+  .cross-dot-ps { fill: #ea580c; }
+  .cross-dot-nm { fill: #2563eb; }
+  .cross-label {
+    font-size: 11px; font-weight: 700; pointer-events: none;
+    paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round;
+  }
+  .cross-label-ps { fill: #ea580c; }
+  .cross-label-nm { fill: #2563eb; }
+  .cross-label-rpm { fill: #0f172a; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>马力机模拟器</h1>
+    <span class="sub">公制马力 PS · 1 PS = 735.5 W · T = 7023.5 × PS / rpm</span>
+  </header>
+  <div class="workspace">
+    <aside class="sidebar">
+      <div id="tabList"></div>
+      <div class="sidebar-actions">
+        <button id="btnNewFile">新建工作文件</button>
+        <button id="btnOpenFile">打开已有文件</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json" multiple hidden>
+    </aside>
+    <div class="main-col">
+    <div id="chart"></div>
+    <aside class="panel">
+      <section class="card">
+      <h2 class="section">输入数据</h2>
+      <textarea id="input" rows="6" placeholder="每行一条，支持：&#10;150@3000          （默认按马力 PS）&#10;200@5000&#10;220 Nm@2500      （按扭矩 Nm）&#10;110 kW@4000      （按功率 kW）"></textarea>
+      <div class="row">
+        <button id="btnAdd" class="primary">追加</button>
+        <button id="btnReplace">替换全部</button>
+        <button id="btnClearInput">清空</button>
+      </div>
+      <div id="msg" class="msg"></div>
+
+      <h2 class="section">生成提示词</h2>
+      <div class="prompt-grid">
+        <label class="pf">发动机型号
+          <input id="pmEngine" type="text" placeholder="如 EA888 / 4G63 / 2JZ-GTE">
+        </label>
+        <label class="pf">Stage
+          <select id="pmStage">
+            <option>原厂</option>
+            <option selected>Stage 1</option>
+            <option>Stage 2</option>
+            <option>Stage 3</option>
+            <option>Stage 3+</option>
+          </select>
+        </label>
+        <label class="pf">进气形式
+          <select id="pmInduction">
+            <option>自吸</option>
+            <option selected>涡轮</option>
+            <option>机械增压</option>
+            <option>双涡轮</option>
+            <option>双增压</option>
+          </select>
+        </label>
+        <label class="pf">输出马力
+          <select id="pmOutput">
+            <option selected>轮上马力（WHP）</option>
+            <option>机头马力（曲轴）</option>
+          </select>
+        </label>
+        <label class="pf" id="pmDriveWrap">驱动形式
+          <select id="pmDrive">
+            <option>前驱 FWD</option>
+            <option selected>后驱 RWD</option>
+            <option>四驱 AWD/4WD</option>
+          </select>
+        </label>
+        <label class="pf" id="pmCompWrap">增压部件型号
+          <input id="pmComp" type="text" list="pmCompList" placeholder="可选，如 GTX2867R">
+          <datalist id="pmCompList">
+            <option value="原厂涡轮"></option>
+            <option value="Garrett GTX2867R"></option>
+            <option value="Garrett GTX3071R"></option>
+            <option value="Garrett GTX3576R"></option>
+            <option value="BorgWarner EFR6758"></option>
+            <option value="BorgWarner EFR7163"></option>
+            <option value="IHI IS38"></option>
+            <option value="IHI IS20"></option>
+            <option value="Mitsubishi TD04"></option>
+            <option value="Mitsubishi TD05"></option>
+            <option value="Precision PT6266"></option>
+            <option value="Eaton M62"></option>
+            <option value="Eaton TVS900"></option>
+            <option value="Rotrex C30"></option>
+          </datalist>
+        </label>
+      </div>
+      <div class="row"><button id="btnCopyPrompt" class="primary">复制提示词</button></div>
+      <textarea id="promptOut" class="prompt-out" rows="7" readonly hidden></textarea>
+      </section>
+
+      <section class="card">
+      <h2 class="section">数据点</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>转速 rpm</th><th>功率 PS</th><th>扭矩 N·m</th><th></th></tr></thead>
+          <tbody id="pointsBody"></tbody>
+        </table>
+      </div>
+      </section>
+
+      <section class="card">
+      <h2 class="section">设置</h2>
+      <label class="chk"><input type="checkbox" id="snap"> 自动吸附转速</label>
+      <label class="chk">吸附步长
+        <input id="snapStep" type="number" min="1" step="10" value="50">
+        <span>rpm</span>
+      </label>
+      <label class="chk">横轴 rpm 范围
+        <input id="rpmMin" type="number" step="500" value="0">
+        <span>~</span>
+        <input id="rpmMax" type="number" min="1" step="500" value="8000">
+      </label>
+      <label class="chk">左轴 PS 范围
+        <input id="psMin" type="number" step="10" value="0">
+        <span>~</span>
+        <input id="psMax" type="number" min="1" step="10" value="300">
+      </label>
+
+      <div class="row" style="margin-top:14px"><button id="btnClear" class="danger">清空所有点</button></div>
+
+      <div class="hint">
+        操作提示：<br>
+        · 拖动圆点：横拖改转速，纵拖改对应轴的功率 / 扭矩<br>
+        · 双击圆点 或 右键圆点：删除该点<br>
+        · 点击曲线：在该处新增一个点<br>
+        · 图表内无点（或仅 1 点）时，点击空白处可直接创建点<br>
+        · 在空白处按住左键约 0.35 秒：出现纵向读数线，移动鼠标查看与两条曲线的交点数值，单击取消<br>
+        · 拖拽图表右下角可调整图表高度<br>
+        · 左侧栏管理工作文件：双击名称重命名，↓ 下载 JSON，× 删除；用「打开已有文件」或把 .json 拖入页面可导入<br>
+        · 打开文件时自动按峰值设置左轴 PS 范围，使峰值点位于标尺总长的 90%
+      </div>
+      </section>
+    </aside>
+    </div>
+  </div>
+  <div class="modal-mask" id="modalMask">
+    <div class="modal">
+      <p id="modalText"></p>
+      <div class="modal-actions">
+        <button id="modalDownloadDelete" class="primary">下载并删除</button>
+        <button id="modalDelete" class="danger">直接删除</button>
+        <button id="modalCancel">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PS_W = 735.49875;
+  var K = PS_W * 60 / (2 * Math.PI);          // ≈ 7023.4957  T = K * PS / rpm
+  var KEY = "power-torque-v2";
+  var OLD_KEY = "power-torque-points-v1";
+
+  var chart = document.getElementById("chart");
+  var state = {
+    files: [], activeId: null,
+    points: [], snap: true, snapStep: 50, psMin: 0, psMax: 300,
+    rpmMin: 0, rpmMax: 8000, chartH: 560
+  };
+  var sizeReady = false;
+  var renamingId = null;
+  var pendingDeleteId = null;
+  var view = null;
+  var drag = null;
+  var lastDragTs = 0;
+  var crosshair = null;      // { rpm } 长按后出现的纵向读数线
+  var pressTimer = null;
+  var press = null;          // { x, y } 长按起点
+  var suppressClick = false; // 长按后抑制随后的 click
+
+  /* ---------------- math helpers ---------------- */
+  function maxIndex(a) {
+    var k = 0;
+    for (var i = 1; i < a.length; i++) if (a[i] > a[k]) k = i;
+    return k;
+  }
+  function niceNum(range, round) {
+    if (!(range > 0)) return 1;
+    var exp = Math.floor(Math.log10(range));
+    var frac = range / Math.pow(10, exp);
+    var nf;
+    if (round) { nf = frac < 1.5 ? 1 : frac < 3 ? 2 : frac < 7 ? 5 : 10; }
+    else { nf = frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 5 ? 5 : 10; }
+    return nf * Math.pow(10, exp);
+  }
+  function r12(v) { return Number(v.toPrecision(12)); }
+  function r2(v) { return Math.round(v * 100) / 100; }
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function rangeTicks(min, max, count) {
+    if (!(max > min)) return [r12(min)];
+    var step = niceNum((max - min) / Math.max(count - 1, 1), true);
+    var start = Math.ceil(min / step - 1e-9) * step;
+    var ticks = [];
+    for (var v = start; v <= max + step * 1e-6; v += step) ticks.push(r12(v));
+    if (!ticks.length) ticks.push(r12(min));
+    return ticks;
+  }
+  function monotoneSlopes(xs, ys) {
+    var n = xs.length, m = new Array(n), i;
+    if (n === 0) return m;
+    if (n === 1) { m[0] = 0; return m; }
+    var d = new Array(n - 1);
+    for (i = 0; i < n - 1; i++) { var h = xs[i + 1] - xs[i]; d[i] = h === 0 ? 0 : (ys[i + 1] - ys[i]) / h; }
+    m[0] = d[0]; m[n - 1] = d[n - 2];
+    for (i = 1; i < n - 1; i++) m[i] = (d[i - 1] * d[i] <= 0) ? 0 : (d[i - 1] + d[i]) / 2;
+    for (i = 0; i < n - 1; i++) {
+      if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
+      var a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+      if (s > 9) { var t = 3 / Math.sqrt(s); m[i] = t * a * d[i]; m[i + 1] = t * b * d[i]; }
+    }
+    return m;
+  }
+  function evalMonotone(xs, ys, m, x) {
+    var n = xs.length;
+    if (n === 0) return NaN;
+    if (n === 1) return ys[0];
+    if (x <= xs[0]) return ys[0];
+    if (x >= xs[n - 1]) return ys[n - 1];
+    var i = 0;
+    while (i < n - 2 && x > xs[i + 1]) i++;
+    var h = xs[i + 1] - xs[i];
+    if (h === 0) return ys[i + 1];
+    var t = (x - xs[i]) / h, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h * m[i]
+         + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h * m[i + 1];
+  }
+  function pathFromMonotone(xs, ys, m, sx, sy) {
+    var d = "M " + r2(sx(xs[0])) + " " + r2(sy(ys[0]));
+    for (var i = 0; i < xs.length - 1; i++) {
+      var h = xs[i + 1] - xs[i];
+      var c1x = xs[i] + h / 3, c1y = ys[i] + m[i] * h / 3;
+      var c2x = xs[i + 1] - h / 3, c2y = ys[i + 1] - m[i + 1] * h / 3;
+      d += " C " + r2(sx(c1x)) + " " + r2(sy(c1y)) + " " + r2(sx(c2x)) + " " + r2(sy(c2y))
+         + " " + r2(sx(xs[i + 1])) + " " + r2(sy(ys[i + 1]));
+    }
+    return d;
+  }
+  function fmt(v) {
+    if (!isFinite(v)) return "-";
+    var a = Math.abs(v);
+    if (a >= 1000) return Math.round(v).toLocaleString("en-US");
+    if (a >= 100) return v.toFixed(0);
+    if (a >= 10) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+  function torqueOf(p) { return K * p.ps / p.rpm; }
+
+  /* ---------------- data ---------------- */
+  function sanitize(arr) {
+    if (!Array.isArray(arr)) return [];
+    var out = [];
+    for (var i = 0; i < arr.length; i++) {
+      var p = arr[i];
+      if (!p) continue;
+      var rpm = Number(p.rpm), ps = Number(p.ps);
+      if (isFinite(rpm) && isFinite(ps) && rpm > 0 && ps >= 0) out.push({ rpm: rpm, ps: ps });
+    }
+    out.sort(function (a, b) { return a.rpm - b.rpm; });
+    return out;
+  }
+  function uid() {
+    return "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function normFile(f) {
+    if (!f || typeof f !== "object") return null;
+    return {
+      id: f.id || uid(),
+      name: (typeof f.name === "string" && f.name.trim()) ? f.name.trim() : "工作文件",
+      points: sanitize(f.points),
+      psMin: isFinite(f.psMin) ? Number(f.psMin) : 0,
+      psMax: (isFinite(f.psMax) && f.psMax > 0) ? Number(f.psMax) : 300,
+      rpmMin: isFinite(f.rpmMin) ? Number(f.rpmMin) : 0,
+      rpmMax: (isFinite(f.rpmMax) && f.rpmMax > 0) ? Number(f.rpmMax) : 8000
+    };
+  }
+  function defaultFile(name) {
+    return { id: uid(), name: name, points: [], psMin: 0, psMax: 300, rpmMin: 0, rpmMax: 8000 };
+  }
+  function activeFile() {
+    for (var i = 0; i < state.files.length; i++) if (state.files[i].id === state.activeId) return state.files[i];
+    return state.files[0] || null;
+  }
+  function pullActive() {
+    var f = activeFile();
+    if (!f) return;
+    state.points = f.points;
+    state.psMin = f.psMin; state.psMax = f.psMax;
+    state.rpmMin = f.rpmMin; state.rpmMax = f.rpmMax;
+  }
+  function pushActive() {
+    var f = activeFile();
+    if (!f) return;
+    f.points = state.points;
+    f.psMin = state.psMin; f.psMax = state.psMax;
+    f.rpmMin = state.rpmMin; f.rpmMax = state.rpmMax;
+  }
+  function load() {
+    var raw = null, old = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) {}
+    try { old = localStorage.getItem(OLD_KEY); } catch (e) {}
+
+    if (raw !== null) {
+      try {
+        var o = JSON.parse(raw);
+        if (o && Array.isArray(o.files)) {
+          state.files = o.files.map(normFile).filter(Boolean);
+          state.activeId = o.activeId;
+        }
+        if (o && o.ui) {
+          if (typeof o.ui.snap === "boolean") state.snap = o.ui.snap;
+          if (isFinite(o.ui.snapStep) && o.ui.snapStep > 0) state.snapStep = Number(o.ui.snapStep);
+          if (isFinite(o.ui.chartH) && o.ui.chartH > 0) state.chartH = Number(o.ui.chartH);
+        }
+      } catch (e) { state.files = []; }
+    }
+
+    if (!state.files.length) {
+      var of = null;
+      if (old !== null) { try { of = JSON.parse(old); } catch (e) { of = null; } }
+      var f = defaultFile("默认工作文件");
+      if (of) {
+        f.points = sanitize(Array.isArray(of) ? of : of.points);
+        if (isFinite(of.psMin)) f.psMin = Number(of.psMin);
+        if (isFinite(of.psMax) && of.psMax > 0) f.psMax = Number(of.psMax);
+        if (isFinite(of.rpmMin)) f.rpmMin = Number(of.rpmMin);
+        if (isFinite(of.rpmMax) && of.rpmMax > 0) f.rpmMax = Number(of.rpmMax);
+        if (typeof of.snap === "boolean") state.snap = of.snap;
+        if (isFinite(of.snapStep) && of.snapStep > 0) state.snapStep = Number(of.snapStep);
+        if (isFinite(of.chartH) && of.chartH > 0) state.chartH = Number(of.chartH);
+      } else {
+        f.points = [
+          { rpm: 1000, ps: 80 }, { rpm: 2000, ps: 140 }, { rpm: 3000, ps: 180 },
+          { rpm: 4000, ps: 200 }, { rpm: 5000, ps: 200 }, { rpm: 6000, ps: 180 },
+          { rpm: 6500, ps: 160 }
+        ];
+      }
+      state.files = [f];
+      state.activeId = f.id;
+    }
+
+    if (!activeFile()) state.activeId = state.files[0].id;
+    pullActive();
+  }
+  function save() {
+    try {
+      pushActive();
+      localStorage.setItem(KEY, JSON.stringify({
+        activeId: state.activeId,
+        files: state.files,
+        ui: { snap: state.snap, snapStep: state.snapStep, chartH: state.chartH }
+      }));
+    } catch (e) {}
+  }
+  function mergePoints(a, b) {
+    var m = new Map(), i;
+    for (i = 0; i < a.length; i++) m.set(a[i].rpm, a[i]);
+    for (i = 0; i < b.length; i++) m.set(b[i].rpm, b[i]);
+    var out = [];
+    m.forEach(function (v) { out.push(v); });
+    out.sort(function (x, y) { return x.rpm - y.rpm; });
+    return out;
+  }
+
+  /* ---------------- render ---------------- */
+  function render() {
+    var W = chart.clientWidth, H = chart.clientHeight;
+    if (W < 60 || H < 60) return;
+    var margin = { top: 28, right: 66, bottom: 48, left: 66 };
+    var plot = { x0: margin.left, y0: margin.top, x1: W - margin.right, y1: H - margin.bottom };
+
+    var P = state.points;
+    var sorted = P.slice().sort(function (a, b) { return a.rpm - b.rpm; });
+    var xs = sorted.map(function (p) { return p.rpm; });
+    var ysPs = sorted.map(function (p) { return p.ps; });
+    var ysNm = sorted.map(torqueOf);
+
+    var rpmMin = isFinite(state.rpmMin) ? state.rpmMin : 0;
+    var rpmMax = (state.rpmMax > rpmMin) ? state.rpmMax : rpmMin + 1000;
+    var xDom = { min: rpmMin, max: rpmMax, ticks: rangeTicks(rpmMin, rpmMax, 9) };
+
+    var psMin = isFinite(state.psMin) ? state.psMin : 0;
+    var psMax = (state.psMax > psMin) ? state.psMax : psMin + 100;
+    var pDom = { min: psMin, max: psMax, ticks: rangeTicks(psMin, psMax, 6) };
+
+    var psPeak = 0, psPeakRpm = 0, nmPeak = 0, nmPeakRpm = 0;
+    if (P.length) {
+      var pi = maxIndex(ysPs), ni = maxIndex(ysNm);
+      psPeak = ysPs[pi]; psPeakRpm = xs[pi];
+      nmPeak = ysNm[ni]; nmPeakRpm = xs[ni];
+    }
+
+    var tDom;
+    if (P.length) {
+      var psFrac = (psMax - psMin) > 0 ? (psPeak - psMin) / (psMax - psMin) : 0;
+      var nmAxisMax = (psFrac > 1e-6 && nmPeak > 0) ? nmPeak / psFrac : (nmPeak > 0 ? nmPeak : 1);
+      if (!(nmAxisMax > 0)) nmAxisMax = 1;
+      if (drag && drag.tMax) nmAxisMax = drag.tMax;
+      tDom = { min: 0, max: nmAxisMax, ticks: rangeTicks(0, nmAxisMax, 6) };
+    } else {
+      var nmEmpty = ((psMin + psMax) / 2) * K / 3000;
+      if (!(nmEmpty > 0)) nmEmpty = 1;
+      tDom = { min: 0, max: nmEmpty, ticks: rangeTicks(0, nmEmpty, 6) };
+    }
+
+    function mk(d0, d1, p0, p1) {
+      return function (v) { return p0 + (v - d0) / (d1 - d0) * (p1 - p0); };
+    }
+    var sx = mk(xDom.min, xDom.max, plot.x0, plot.x1);
+    var ix = function (px) { return xDom.min + (px - plot.x0) / (plot.x1 - plot.x0) * (xDom.max - xDom.min); };
+    var syT = mk(tDom.min, tDom.max, plot.y1, plot.y0);
+    var syP = mk(pDom.min, pDom.max, plot.y1, plot.y0);
+    var iyT = function (py) { return tDom.min + (plot.y1 - py) / (plot.y1 - plot.y0) * (tDom.max - tDom.min); };
+    var iyP = function (py) { return pDom.min + (plot.y1 - py) / (plot.y1 - plot.y0) * (pDom.max - pDom.min); };
+
+    var s = [];
+    s.push('<svg width="' + W + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">');
+    s.push('<defs><clipPath id="plotClip"><rect x="' + plot.x0 + '" y="' + plot.y0 + '" width="' + (plot.x1 - plot.x0) + '" height="' + (plot.y1 - plot.y0) + '"/></clipPath></defs>');
+    s.push('<rect data-bg class="plot-bg" x="' + plot.x0 + '" y="' + plot.y0 + '" width="' + (plot.x1 - plot.x0) + '" height="' + (plot.y1 - plot.y0) + '" fill="#ffffff"/>');
+
+    var i, t, x, y;
+    s.push('<g class="grid">');
+    for (i = 0; i < xDom.ticks.length; i++) { x = r2(sx(xDom.ticks[i])); s.push('<line x1="' + x + '" y1="' + plot.y0 + '" x2="' + x + '" y2="' + plot.y1 + '"/>'); }
+    for (i = 0; i < pDom.ticks.length; i++) { y = r2(syP(pDom.ticks[i])); s.push('<line x1="' + plot.x0 + '" y1="' + y + '" x2="' + plot.x1 + '" y2="' + y + '"/>'); }
+    s.push('</g>');
+
+    s.push('<g class="axis">');
+    s.push('<line x1="' + plot.x0 + '" y1="' + plot.y0 + '" x2="' + plot.x0 + '" y2="' + plot.y1 + '"/>');
+    s.push('<line x1="' + plot.x1 + '" y1="' + plot.y0 + '" x2="' + plot.x1 + '" y2="' + plot.y1 + '"/>');
+    s.push('<line x1="' + plot.x0 + '" y1="' + plot.y1 + '" x2="' + plot.x1 + '" y2="' + plot.y1 + '"/>');
+    for (i = 0; i < xDom.ticks.length; i++) {
+      t = xDom.ticks[i]; x = r2(sx(t));
+      s.push('<line x1="' + x + '" y1="' + plot.y1 + '" x2="' + x + '" y2="' + (plot.y1 + 5) + '"/>');
+      s.push('<text x="' + x + '" y="' + (plot.y1 + 19) + '" text-anchor="middle">' + fmt(t) + '</text>');
+    }
+    for (i = 0; i < pDom.ticks.length; i++) {
+      t = pDom.ticks[i]; y = r2(syP(t));
+      s.push('<line x1="' + (plot.x0 - 5) + '" y1="' + y + '" x2="' + plot.x0 + '" y2="' + y + '"/>');
+      s.push('<text x="' + (plot.x0 - 9) + '" y="' + (y + 4) + '" text-anchor="end">' + fmt(t) + '</text>');
+    }
+    for (i = 0; i < tDom.ticks.length; i++) {
+      t = tDom.ticks[i]; y = r2(syT(t));
+      s.push('<line x1="' + plot.x1 + '" y1="' + y + '" x2="' + (plot.x1 + 5) + '" y2="' + y + '"/>');
+      s.push('<text x="' + (plot.x1 + 9) + '" y="' + (y + 4) + '" text-anchor="start">' + fmt(t) + '</text>');
+    }
+    s.push('</g>');
+
+    var cy = (plot.y0 + plot.y1) / 2;
+    s.push('<text class="axis-title" x="' + ((plot.x0 + plot.x1) / 2) + '" y="' + (H - 10) + '" text-anchor="middle">转速 rpm</text>');
+    s.push('<text class="axis-title" x="18" y="' + cy + '" text-anchor="middle" transform="rotate(-90 18 ' + cy + ')">功率 PS</text>');
+    s.push('<text class="axis-title" x="' + (W - 16) + '" y="' + cy + '" text-anchor="middle" transform="rotate(90 ' + (W - 16) + ' ' + cy + ')">扭矩 N·m</text>');
+
+    if (P.length && psPeak > psMin) {
+      var peakY = r2(syP(psPeak));
+      s.push('<line class="peak-line" x1="' + plot.x0 + '" y1="' + peakY + '" x2="' + plot.x1 + '" y2="' + peakY + '"/>');
+    }
+
+    var curveData = null;
+    if (P.length >= 2) {
+      var mT = monotoneSlopes(xs, ysNm);
+      var mP = monotoneSlopes(xs, ysPs);
+      var dT = pathFromMonotone(xs, ysNm, mT, sx, syT);
+      var dP = pathFromMonotone(xs, ysPs, mP, sx, syP);
+      curveData = { xs: xs, ysNm: ysNm, ysPs: ysPs, mT: mT, mP: mP };
+      s.push('<g clip-path="url(#plotClip)">');
+      s.push('<path class="curve curve-nm" d="' + dT + '"/>');
+      s.push('<path class="curve curve-ps" d="' + dP + '"/>');
+      s.push('</g>');
+      s.push('<path class="hit" data-curve="nm" d="' + dT + '"/>');
+      s.push('<path class="hit" data-curve="ps" d="' + dP + '"/>');
+    }
+
+    if (P.length) {
+      for (i = 0; i < P.length; i++) {
+        var p = P[i];
+        x = r2(sx(p.rpm));
+        var yT = r2(syT(torqueOf(p)));
+        var yP = r2(syP(p.ps));
+        s.push('<g class="handle-g"><circle class="handle-hit" data-handle="1" data-idx="' + i + '" data-series="nm" cx="' + x + '" cy="' + yT + '" r="11"/><circle class="handle handle-nm" cx="' + x + '" cy="' + yT + '" r="5"/></g>');
+        s.push('<g class="handle-g"><circle class="handle-hit" data-handle="1" data-idx="' + i + '" data-series="ps" cx="' + x + '" cy="' + yP + '" r="11"/><circle class="handle handle-ps" cx="' + x + '" cy="' + yP + '" r="5"/></g>');
+      }
+    }
+
+    if (P.length) {
+      var plx1 = clamp(sx(psPeakRpm), plot.x0 + 62, plot.x1 - 62);
+      s.push('<text class="peak-label peak-label-ps" x="' + r2(plx1) + '" y="' + r2(syP(psPeak) - 9) + '" text-anchor="middle">峰值 ' + fmt(psPeak) + ' PS @ ' + fmt(psPeakRpm) + ' rpm</text>');
+      var plx2 = clamp(sx(nmPeakRpm), plot.x0 + 70, plot.x1 - 70);
+      s.push('<text class="peak-label peak-label-nm" x="' + r2(plx2) + '" y="' + r2(syT(nmPeak) + 16) + '" text-anchor="middle">峰值 ' + fmt(nmPeak) + ' N·m @ ' + fmt(nmPeakRpm) + ' rpm</text>');
+    }
+
+    if (crosshair) {
+      var crpm = crosshair.rpm;
+      var cx = r2(sx(crpm));
+      s.push('<line class="cross-line" x1="' + cx + '" y1="' + plot.y0 + '" x2="' + cx + '" y2="' + plot.y1 + '"/>');
+      s.push('<text class="cross-label cross-label-rpm" x="' + cx + '" y="' + (plot.y1 - 6) + '" text-anchor="middle">' + fmt(crpm) + ' rpm</text>');
+      if (curveData) {
+        var vPs = evalMonotone(xs, ysPs, curveData.mP, crpm);
+        var vNm = evalMonotone(xs, ysNm, curveData.mT, crpm);
+        var cyPs = r2(syP(vPs)), cyNm = r2(syT(vNm));
+        var anchor = cx > (plot.x0 + plot.x1) / 2 ? "end" : "start";
+        var tx = anchor === "end" ? cx - 8 : cx + 8;
+        s.push('<circle class="cross-dot cross-dot-ps" cx="' + cx + '" cy="' + cyPs + '" r="4"/>');
+        s.push('<circle class="cross-dot cross-dot-nm" cx="' + cx + '" cy="' + cyNm + '" r="4"/>');
+        s.push('<text class="cross-label cross-label-ps" x="' + tx + '" y="' + (cyPs - 8) + '" text-anchor="' + anchor + '">' + fmt(vPs) + ' PS</text>');
+        s.push('<text class="cross-label cross-label-nm" x="' + tx + '" y="' + (cyNm - 8) + '" text-anchor="' + anchor + '">' + fmt(vNm) + ' N·m</text>');
+      }
+    }
+
+    s.push('<g class="legend" transform="translate(' + (plot.x0 + 12) + ',' + (plot.y0 + 14) + ')">');
+    s.push('<line x1="0" y1="0" x2="18" y2="0" class="curve-nm"/>');
+    s.push('<text x="24" y="4">扭矩 N·m</text>');
+    s.push('<line x1="0" y1="20" x2="18" y2="20" class="curve-ps"/>');
+    s.push('<text x="24" y="24">功率 PS</text>');
+    s.push('</g>');
+
+    s.push('</svg>');
+    s.push('<div class="tip"></div>');
+    chart.innerHTML = s.join('');
+
+    view = {
+      sx: sx, ix: ix, syT: syT, syP: syP, iyT: iyT, iyP: iyP,
+      xDom: xDom, tDom: tDom, pDom: pDom, plot: plot, curveData: curveData
+    };
+  }
+
+  /* ---------------- table ---------------- */
+  function renderTable() {
+    var tb = document.getElementById("pointsBody");
+    var sorted = state.points.slice().sort(function (a, b) { return a.rpm - b.rpm; });
+    if (!sorted.length) { tb.innerHTML = '<tr><td colspan="4" class="muted">暂无数据点</td></tr>'; return; }
+    var rows = [];
+    for (var i = 0; i < sorted.length; i++) {
+      var p = sorted[i];
+      var idx = state.points.indexOf(p);
+      rows.push('<tr>'
+        + '<td><input class="cell" type="number" min="' + r12(Math.max(1, state.rpmMin)) + '" max="' + r12(state.rpmMax) + '" step="' + (state.snapStep > 0 ? state.snapStep : 1) + '" data-idx="' + idx + '" data-field="rpm" value="' + r12(p.rpm) + '"></td>'
+        + '<td><input class="cell" type="number" min="0" step="1" data-idx="' + idx + '" data-field="ps" value="' + r12(p.ps) + '"></td>'
+        + '<td><input class="cell" type="number" min="0" step="1" data-idx="' + idx + '" data-field="nm" value="' + r2(torqueOf(p)) + '"></td>'
+        + '<td><button class="x" data-del="' + idx + '" title="删除"><span class="mi mi-delete"></span></button></td></tr>');
+    }
+    tb.innerHTML = rows.join("");
+  }
+
+  /* ---------------- mutations ---------------- */
+  function addPoint(rpm, ps) {
+    state.points.push({ rpm: rpm, ps: ps });
+    state.points.sort(function (a, b) { return a.rpm - b.rpm; });
+    save(); render(); renderTable();
+  }
+  function removePoint(i) {
+    if (i < 0 || i >= state.points.length) return;
+    state.points.splice(i, 1);
+    save(); render(); renderTable();
+  }
+
+  /* ---------------- interactions ---------------- */
+  function svgRect() { var svg = chart.querySelector("svg"); return svg ? svg.getBoundingClientRect() : null; }
+  function hideTip() { var t = chart.querySelector(".tip"); if (t) t.style.display = "none"; }
+
+  function crosshairRpm(clientX) {
+    var v = view, r = svgRect();
+    if (!v || !r) return null;
+    return clamp(v.ix(clientX - r.left), Math.max(1, v.xDom.min), v.xDom.max);
+  }
+
+  chart.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    suppressClick = false;
+    var h = e.target.closest("[data-handle]");
+    if (h) {
+      e.preventDefault();
+      drag = { idx: +h.getAttribute("data-idx"), series: h.getAttribute("data-series"), sx: e.clientX, sy: e.clientY, moved: false, tMax: view ? view.tDom.max : null };
+      document.body.style.userSelect = "none";
+      return;
+    }
+    if (!e.target.closest("[data-bg]")) return;
+    press = { x: e.clientX, y: e.clientY };
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = setTimeout(function () {
+      pressTimer = null;
+      if (!press) return;
+      var rpm = crosshairRpm(press.x);
+      if (rpm === null) return;
+      crosshair = { rpm: rpm };
+      suppressClick = true;
+      render();
+    }, 350);
+  });
+
+  window.addEventListener("pointermove", function (e) {
+    if (drag) {
+      if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 3) drag.moved = true;
+      var v = view, r = svgRect();
+      if (!v || !r) return;
+      var px = e.clientX - r.left, py = e.clientY - r.top;
+      var p = state.points[drag.idx];
+      if (!p) return;
+      var rpm = v.ix(px);
+      if (state.snap && state.snapStep > 0) rpm = Math.round(rpm / state.snapStep) * state.snapStep;
+      rpm = clamp(rpm, Math.max(1, v.xDom.min), v.xDom.max);
+      if (drag.series === "nm") {
+        var t = clamp(v.iyT(py), 0, v.tDom.max);
+        p.ps = t * rpm / K;
+      } else {
+        p.ps = clamp(v.iyP(py), v.pDom.min, v.pDom.max);
+      }
+      p.rpm = rpm;
+      render();
+      hideTip();
+      return;
+    }
+    if (press && Math.abs(e.clientX - press.x) + Math.abs(e.clientY - press.y) > 6) {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      press = null;
+    }
+    if (crosshair) {
+      var cr = crosshairRpm(e.clientX);
+      if (cr === null) return;
+      crosshair.rpm = cr;
+      render();
+      hideTip();
+    }
+  });
+
+  window.addEventListener("pointerup", function () {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    press = null;
+    if (!drag) return;
+    var moved = drag.moved, idx = drag.idx;
+    drag = null;
+    document.body.style.userSelect = "";
+    if (!moved) return;
+    lastDragTs = Date.now();
+    var keep = state.points[idx];
+    if (keep) {
+      state.points = state.points.filter(function (p) {
+        return p === keep || Math.abs(p.rpm - keep.rpm) > 1e-6;
+      });
+    }
+    state.points.sort(function (a, b) { return a.rpm - b.rpm; });
+    save(); render(); renderTable();
+  });
+
+  chart.addEventListener("click", function (e) {
+    if (suppressClick) { suppressClick = false; return; }
+    if (Date.now() - lastDragTs < 300) return;
+    if (e.target.closest("[data-handle]")) return;
+    var v = view, r = svgRect();
+    if (!v || !r) return;
+    var px = e.clientX - r.left, py = e.clientY - r.top;
+    var curve = e.target.closest("[data-curve]");
+    var bg = e.target.closest("[data-bg]");
+    if (crosshair) {
+      crosshair = null;
+      if (!curve) { render(); return; }
+    }
+    var rpm = v.ix(px);
+    if (state.snap && state.snapStep > 0) rpm = Math.round(rpm / state.snapStep) * state.snapStep;
+    rpm = clamp(rpm, Math.max(1, v.xDom.min), v.xDom.max);
+    var ps;
+    if (curve) {
+      if (!v.curveData) return;
+      if (curve.getAttribute("data-curve") === "nm") {
+        var t = evalMonotone(v.curveData.xs, v.curveData.ysNm, v.curveData.mT, rpm);
+        ps = t * rpm / K;
+      } else {
+        ps = evalMonotone(v.curveData.xs, v.curveData.ysPs, v.curveData.mP, rpm);
+      }
+    } else if (bg && state.points.length < 2) {
+      ps = clamp(v.iyP(py), v.pDom.min, v.pDom.max);
+    } else {
+      render();
+      return;
+    }
+    if (!isFinite(ps) || ps < 0) return;
+    addPoint(rpm, ps);
+  });
+
+  chart.addEventListener("dblclick", function (e) {
+    var h = e.target.closest("[data-handle]");
+    if (!h) return;
+    e.preventDefault();
+    removePoint(+h.getAttribute("data-idx"));
+  });
+
+  chart.addEventListener("contextmenu", function (e) {
+    var h = e.target.closest("[data-handle]");
+    if (!h) return;
+    e.preventDefault();
+    removePoint(+h.getAttribute("data-idx"));
+  });
+
+  chart.addEventListener("pointermove", function (e) {
+    if (drag) { hideTip(); return; }
+    var tip = chart.querySelector(".tip");
+    if (!tip) return;
+    var h = e.target.closest("[data-handle]");
+    if (!h) { tip.style.display = "none"; return; }
+    var p = state.points[+h.getAttribute("data-idx")];
+    if (!p) { tip.style.display = "none"; return; }
+    var r = chart.getBoundingClientRect();
+    tip.style.left = (e.clientX - r.left + 14) + "px";
+    tip.style.top = (e.clientY - r.top + 14) + "px";
+    tip.innerHTML = "<b>" + fmt(p.rpm) + " rpm</b><br>扭矩 " + fmt(torqueOf(p)) + " N·m<br>功率 " + fmt(p.ps) + " PS";
+    tip.style.display = "block";
+  });
+  chart.addEventListener("pointerleave", hideTip);
+
+  /* ---------------- input parsing ---------------- */
+  function parseLine(line) {
+    var s = line.trim();
+    if (!s || s.charAt(0) === "#") return null;
+    var unit = "ps";
+    if (/n\s*[·.*]?\s*m|牛|扭矩/i.test(s)) unit = "nm";
+    else if (/kw|千瓦/i.test(s)) unit = "kw";
+    else if (/ps|hp|马力|匹/i.test(s)) unit = "ps";
+
+    var vp, rp;
+    if (s.indexOf("@") >= 0) {
+      var i = s.indexOf("@"); vp = s.slice(0, i); rp = s.slice(i + 1);
+    } else if (/[,，]/.test(s)) {
+      var parts = s.split(/[,，]/); vp = parts[0]; rp = parts[1] || "";
+    } else {
+      var nums = s.match(/\d+(\.\d+)?/g);
+      if (!nums || nums.length < 2) return { error: "无法解析：" + s };
+      vp = nums[0]; rp = nums[1];
+    }
+    var vm = vp.match(/-?\d+(\.\d+)?/), rm = rp.match(/-?\d+(\.\d+)?/);
+    if (!vm || !rm) return { error: "无法解析：" + s };
+    var value = parseFloat(vm[0]), rpm = parseFloat(rm[0]);
+    if (!isFinite(value) || !isFinite(rpm)) return { error: "数值无效：" + s };
+    if (rpm <= 0) return { error: "转速必须大于 0：" + s };
+    if (rpm < state.rpmMin || rpm > state.rpmMax) return { error: "转速超出范围 " + state.rpmMin + " ~ " + state.rpmMax + " rpm：" + s };
+    var ps;
+    if (unit === "nm") ps = value * rpm / K;
+    else if (unit === "kw") ps = value / PS_W * 1000;
+    else ps = value;
+    if (ps < 0) return { error: "功率不能为负：" + s };
+    return { rpm: rpm, ps: ps };
+  }
+  function parseInput(text) {
+    var lines = text.split(/\r?\n/), pts = [], errs = [];
+    for (var i = 0; i < lines.length; i++) {
+      var res = parseLine(lines[i]);
+      if (!res) continue;
+      if (res.error) { errs.push(res.error); continue; }
+      pts.push({ rpm: res.rpm, ps: res.ps });
+    }
+    return { pts: pts, errs: errs };
+  }
+  function setMsg(html, cls) {
+    var el = document.getElementById("msg");
+    el.className = "msg " + (cls || "");
+    el.innerHTML = html;
+  }
+
+  var inputEl = document.getElementById("input");
+  document.getElementById("btnAdd").addEventListener("click", function () {
+    var r = parseInput(inputEl.value);
+    if (!r.pts.length && !r.errs.length) { setMsg("没有可解析的数据行", "err"); return; }
+    if (r.pts.length) {
+      state.points = mergePoints(state.points, r.pts);
+      save(); render(); renderTable();
+    }
+    var html = r.pts.length ? "已追加 " + r.pts.length + " 个点" : "";
+    if (r.errs.length) html += (html ? "<br>" : "") + "忽略 " + r.errs.length + " 行：<ul><li>" + r.errs.join("</li><li>") + "</li></ul>";
+    setMsg(html, r.errs.length ? "err" : "ok");
+  });
+  document.getElementById("btnReplace").addEventListener("click", function () {
+    var r = parseInput(inputEl.value);
+    if (!r.pts.length) { setMsg("没有可解析的数据行", "err"); return; }
+    state.points = sanitize(r.pts);
+    save(); render(); renderTable();
+    var html = "已替换为 " + r.pts.length + " 个点";
+    if (r.errs.length) html += "<br>忽略 " + r.errs.length + " 行";
+    setMsg(html, r.errs.length ? "err" : "ok");
+  });
+  document.getElementById("btnClearInput").addEventListener("click", function () {
+    inputEl.value = "";
+    setMsg("");
+  });
+
+  /* ---------------- 生成提示词 ---------------- */
+  var INDUCTION_TEXT = {
+    "自吸": "自然吸气（NA）",
+    "涡轮": "单涡轮增压",
+    "机械增压": "机械增压",
+    "双涡轮": "双涡轮增压",
+    "双增压": "涡轮+机械双增压"
+  };
+  var pmEngineEl = document.getElementById("pmEngine");
+  var pmStageEl = document.getElementById("pmStage");
+  var pmInductionEl = document.getElementById("pmInduction");
+  var pmOutputEl = document.getElementById("pmOutput");
+  var pmDriveEl = document.getElementById("pmDrive");
+  var pmDriveWrapEl = document.getElementById("pmDriveWrap");
+  var pmCompEl = document.getElementById("pmComp");
+  var pmCompWrapEl = document.getElementById("pmCompWrap");
+  var promptOutEl = document.getElementById("promptOut");
+
+  function isWheelOutput() { return pmOutputEl.value.indexOf("轮上") >= 0; }
+  function syncVisibility() {
+    pmCompWrapEl.style.display = (pmInductionEl.value === "自吸") ? "none" : "";
+    pmDriveWrapEl.style.display = isWheelOutput() ? "" : "none";
+  }
+  pmInductionEl.addEventListener("change", syncVisibility);
+  pmOutputEl.addEventListener("change", syncVisibility);
+  syncVisibility();
+
+  function buildPrompt() {
+    var engine = (pmEngineEl.value || "").trim() || "未指定";
+    var stage = pmStageEl.value;
+    var induction = INDUCTION_TEXT[pmInductionEl.value] || pmInductionEl.value;
+    var comp = (pmCompEl.value || "").trim();
+    var lines = [];
+    lines.push("你是一名发动机性能数据专家。请根据下面的发动机配置，估算一条真实可信的发动机外特性曲线，并以纯数据点行的形式输出。");
+    lines.push("");
+    var wheel = isWheelOutput();
+    lines.push("【发动机配置】");
+    lines.push("- 发动机型号：" + engine);
+    lines.push("- 进气形式：" + induction);
+    lines.push("- 改装阶段：" + stage);
+    if (wheel) lines.push("- 驱动形式：" + pmDriveEl.value);
+    if (induction.indexOf("自然吸气") < 0) {
+      lines.push("- 增压部件：" + (comp || "未指定（按该阶段常见配置估算）"));
+    }
+    lines.push("");
+    lines.push("【马力估算方式】");
+    if (wheel) {
+      lines.push("1. 先根据发动机配置估算机头马力（曲轴马力）。");
+      lines.push("2. 再按驱动形式换算为轮上马力：");
+      lines.push("- 前驱 FWD：轮上马力 ≈ 机头马力 × 80–88%");
+      lines.push("- 后驱 RWD：轮上马力 ≈ 机头马力 × 75–85%");
+      lines.push("- 四驱 AWD/4WD：轮上马力 ≈ 机头马力 × 65–80%");
+      lines.push("3. 本次驱动形式为 " + pmDriveEl.value + "，请按对应区间取值换算。");
+      lines.push("4. 最终输出的功率必须是轮上马力（WHP），不要输出机头/曲轴马力。");
+    } else {
+      lines.push("所有功率按机头马力（曲轴马力）估算并输出，不要换算为轮上马力。");
+    }
+    lines.push("");
+    lines.push("【输出要求】");
+    lines.push("1. 只输出数据点，不要任何解释、标题、单位说明、代码块或多余文字。");
+    lines.push("2. 第一行必须是 0@1（即 0 PS @ 1 rpm），其余每行格式为：功率PS@转速rpm，例如：150@3000");
+    lines.push("3. 由你根据该配置自行决定合理的转速范围（低转 → 红线/断油点）与数据点数量（约 6~12 个）。");
+    lines.push("4. 数值符合物理规律。");
+    lines.push("5. 转速为整数，功率为整数或保留一位小数。");
+    return lines.join("\n");
+  }
+
+  function copyPrompt() {
+    var text = buildPrompt();
+    promptOutEl.value = text;
+    promptOutEl.hidden = false;
+    var ok = function () {
+      setMsg("提示词已复制：粘贴给 AI，再把返回的数据行贴到上方输入框点「追加」即可", "ok");
+    };
+    var fallback = function () {
+      try {
+        promptOutEl.focus();
+        promptOutEl.select();
+        document.execCommand("copy");
+        ok();
+      } catch (e) {
+        setMsg("已生成提示词，请手动复制下方文本", "err");
+      }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, fallback);
+    } else {
+      fallback();
+    }
+  }
+  document.getElementById("btnCopyPrompt").addEventListener("click", copyPrompt);
+
+  document.getElementById("snap").addEventListener("change", function (e) {
+    state.snap = e.target.checked;
+    save();
+  });
+  var snapStepEl = document.getElementById("snapStep");
+  snapStepEl.addEventListener("change", function () {
+    var v = parseFloat(snapStepEl.value);
+    if (!isFinite(v) || v <= 0) { snapStepEl.value = state.snapStep; return; }
+    state.snapStep = Math.round(v);
+    snapStepEl.value = state.snapStep;
+    save();
+  });
+  var psMinEl = document.getElementById("psMin");
+  var psMaxEl = document.getElementById("psMax");
+  function applyPsRange() {
+    var lo = parseFloat(psMinEl.value), hi = parseFloat(psMaxEl.value);
+    if (!isFinite(lo)) lo = state.psMin;
+    if (!isFinite(hi)) hi = state.psMax;
+    if (hi <= lo) hi = lo + 1;
+    state.psMin = lo;
+    state.psMax = hi;
+    psMinEl.value = lo;
+    psMaxEl.value = hi;
+    save(); render();
+  }
+  psMinEl.addEventListener("change", applyPsRange);
+  psMaxEl.addEventListener("change", applyPsRange);
+
+  var rpmMinEl = document.getElementById("rpmMin");
+  var rpmMaxEl = document.getElementById("rpmMax");
+  function applyRpmRange() {
+    var lo = parseFloat(rpmMinEl.value), hi = parseFloat(rpmMaxEl.value);
+    if (!isFinite(lo)) lo = state.rpmMin;
+    if (!isFinite(hi)) hi = state.rpmMax;
+    if (lo < 0) lo = 0;
+    if (hi <= lo) hi = lo + 1000;
+    state.rpmMin = lo;
+    state.rpmMax = hi;
+    rpmMinEl.value = lo;
+    rpmMaxEl.value = hi;
+    save(); render(); renderTable();
+  }
+  rpmMinEl.addEventListener("change", applyRpmRange);
+  rpmMaxEl.addEventListener("change", applyRpmRange);
+
+  document.getElementById("pointsBody").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-del]");
+    if (!b) return;
+    removePoint(+b.getAttribute("data-del"));
+  });
+  document.getElementById("pointsBody").addEventListener("change", function (e) {
+    var el = e.target.closest("input.cell");
+    if (!el) return;
+    var idx = +el.getAttribute("data-idx");
+    var field = el.getAttribute("data-field");
+    var p = state.points[idx];
+    if (!p) { renderTable(); return; }
+    var v = parseFloat(el.value);
+    if (!isFinite(v)) { setMsg("输入无效", "err"); renderTable(); return; }
+    if (field === "rpm") {
+      if (v <= 0 || v < state.rpmMin || v > state.rpmMax) { setMsg("转速需在 " + state.rpmMin + " ~ " + state.rpmMax + " rpm 之间", "err"); renderTable(); return; }
+      p.rpm = v;
+    } else if (field === "ps") {
+      if (v < 0) { setMsg("功率不能为负", "err"); renderTable(); return; }
+      p.ps = v;
+    } else if (field === "nm") {
+      if (v < 0) { setMsg("扭矩不能为负", "err"); renderTable(); return; }
+      p.ps = v * p.rpm / K;
+    }
+    if (field === "rpm") {
+      state.points = state.points.filter(function (q) {
+        return q === p || Math.abs(q.rpm - p.rpm) > 1e-6;
+      });
+    }
+    state.points.sort(function (a, b) { return a.rpm - b.rpm; });
+    save(); render(); renderTable();
+  });
+
+  document.getElementById("btnClear").addEventListener("click", function () {
+    if (!confirm("确定清空所有数据点？")) return;
+    state.points = [];
+    save(); render(); renderTable();
+    setMsg("已清空", "ok");
+  });
+
+  /* ---------------- 工作文件（多文档） ---------------- */
+  function escHtml(s) {
+    return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; });
+  }
+  function escAttr(s) { return escHtml(s).replace(/"/g, "&quot;"); }
+  function safeFileName(name) {
+    var s = String(name || "").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, " ").trim();
+    return s || "work-file";
+  }
+  function applyStateToInputs() {
+    document.getElementById("snap").checked = state.snap;
+    document.getElementById("snapStep").value = state.snapStep;
+    document.getElementById("rpmMin").value = state.rpmMin;
+    document.getElementById("rpmMax").value = state.rpmMax;
+    document.getElementById("psMin").value = state.psMin;
+    document.getElementById("psMax").value = state.psMax;
+  }
+  function renderTabs() {
+    var list = document.getElementById("tabList");
+    var single = state.files.length <= 1;
+    var html = [];
+    for (var i = 0; i < state.files.length; i++) {
+      var f = state.files[i];
+      html.push('<div class="tab-item' + (f.id === state.activeId ? ' active' : '') + '" data-file="' + f.id + '">');
+      if (f.id === renamingId) {
+        html.push('<input class="tab-rename" value="' + escAttr(f.name) + '">');
+      } else {
+        html.push('<span class="tab-name" data-rename-start="' + f.id + '" title="双击重命名">' + escHtml(f.name) + '</span>');
+      }
+      html.push('<button class="tab-btn dl" data-dl="' + f.id + '" title="下载 JSON"><span class="mi mi-download"></span></button>');
+      html.push('<button class="tab-btn del" data-del-file="' + f.id + '" title="' + (single ? '至少保留一个工作文件' : '删除') + '"' + (single ? ' disabled' : '') + '><span class="mi mi-delete"></span></button>');
+      html.push('</div>');
+    }
+    list.innerHTML = html.join("");
+    var inp = list.querySelector(".tab-rename");
+    if (inp) { inp.focus(); inp.select(); }
+  }
+  function switchFile(id) {
+    if (id === state.activeId) return;
+    save();
+    state.activeId = id;
+    pullActive();
+    applyStateToInputs();
+    render(); renderTable(); renderTabs();
+  }
+  function addFile() {
+    save();
+    var n = state.files.length + 1, name;
+    do { name = "工作文件 " + n; n++; } while (state.files.some(function (f) { return f.name === name; }));
+    var f = defaultFile(name);
+    state.files.push(f);
+    state.activeId = f.id;
+    pullActive();
+    applyStateToInputs();
+    save(); render(); renderTable(); renderTabs();
+    setMsg("已新建「" + escHtml(name) + "」", "ok");
+  }
+  function deleteFile(id) {
+    if (state.files.length <= 1) return;
+    var wasActive = (id === state.activeId);
+    state.files = state.files.filter(function (f) { return f.id !== id; });
+    if (wasActive) {
+      state.activeId = state.files[0].id;
+      pullActive();
+      applyStateToInputs();
+    }
+    save(); render(); renderTable(); renderTabs();
+  }
+  function commitRename(inp) {
+    if (!renamingId) return;
+    var id = renamingId;
+    renamingId = null;
+    var v = (inp.value || "").trim();
+    for (var i = 0; i < state.files.length; i++) {
+      if (state.files[i].id === id) { if (v) state.files[i].name = v; break; }
+    }
+    save(); renderTabs();
+  }
+  function downloadFile(id) {
+    var f = null, i;
+    for (i = 0; i < state.files.length; i++) if (state.files[i].id === id) f = state.files[i];
+    if (!f) return;
+    if (id === state.activeId) pushActive();
+    var data = {
+      unit: "PS", name: f.name,
+      points: f.points.slice().sort(function (a, b) { return a.rpm - b.rpm; })
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = safeFileName(f.name) + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  function autoPsRange(pts) {
+    var peak = 0;
+    for (var i = 0; i < pts.length; i++) if (pts[i].ps > peak) peak = pts[i].ps;
+    if (!(peak > 0)) return null;
+    return { psMin: 0, psMax: Math.round(peak / 0.9 * 10) / 10 };
+  }
+  function importJsonText(text, fileName) {
+    var o;
+    try { o = JSON.parse(text); } catch (err) { setMsg("导入失败：JSON 格式错误（" + escHtml(fileName) + "）", "err"); return; }
+    var pts, name;
+    if (Array.isArray(o)) {
+      pts = sanitize(o);
+      name = fileName.replace(/\.json$/i, "");
+    } else if (o && typeof o === "object") {
+      pts = sanitize(o.points);
+      name = (typeof o.name === "string" && o.name.trim()) ? o.name.trim() : fileName.replace(/\.json$/i, "");
+    } else { setMsg("导入失败：内容无法识别", "err"); return; }
+    save();
+    var f = defaultFile(name || "导入文件");
+    f.points = pts;
+    if (o && !Array.isArray(o)) {
+      if (isFinite(o.rpmMin)) f.rpmMin = Number(o.rpmMin);
+      if (isFinite(o.rpmMax) && o.rpmMax > 0) f.rpmMax = Number(o.rpmMax);
+    }
+    var ar = autoPsRange(pts);
+    if (ar) { f.psMin = ar.psMin; f.psMax = ar.psMax; }
+    state.files.push(f);
+    state.activeId = f.id;
+    pullActive();
+    applyStateToInputs();
+    save(); render(); renderTable(); renderTabs();
+  }
+
+  /* ---------------- tab 栏事件 ---------------- */
+  var tabList = document.getElementById("tabList");
+  tabList.addEventListener("click", function (e) {
+    var dl = e.target.closest("[data-dl]");
+    if (dl) { downloadFile(dl.getAttribute("data-dl")); return; }
+    var del = e.target.closest("[data-del-file]");
+    if (del) { if (!del.disabled) askDeleteFile(del.getAttribute("data-del-file")); return; }
+    if (e.target.closest(".tab-rename")) return;
+    var item = e.target.closest("[data-file]");
+    if (item) switchFile(item.getAttribute("data-file"));
+  });
+  tabList.addEventListener("dblclick", function (e) {
+    var nm = e.target.closest("[data-rename-start]");
+    if (!nm) return;
+    renamingId = nm.getAttribute("data-rename-start");
+    renderTabs();
+  });
+  tabList.addEventListener("keydown", function (e) {
+    var inp = e.target.closest(".tab-rename");
+    if (!inp) return;
+    if (e.key === "Enter") { e.preventDefault(); commitRename(inp); }
+    else if (e.key === "Escape") { renamingId = null; renderTabs(); }
+  });
+  tabList.addEventListener("blur", function (e) {
+    var inp = e.target && e.target.closest ? e.target.closest(".tab-rename") : null;
+    if (inp) commitRename(inp);
+  }, true);
+  document.getElementById("btnNewFile").addEventListener("click", addFile);
+  var openFileInput = document.getElementById("fileInput");
+  document.getElementById("btnOpenFile").addEventListener("click", function () { openFileInput.click(); });
+  openFileInput.addEventListener("change", function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    for (var i = 0; i < files.length; i++) {
+      (function (file) {
+        var reader = new FileReader();
+        reader.onload = function () { importJsonText(reader.result, file.name); };
+        reader.readAsText(file);
+      })(files[i]);
+    }
+    e.target.value = "";
+  });
+
+  /* ---------------- 删除确认框 ---------------- */
+  function askDeleteFile(id) {
+    var f = null, i;
+    for (i = 0; i < state.files.length; i++) if (state.files[i].id === id) f = state.files[i];
+    if (!f) return;
+    pendingDeleteId = id;
+    document.getElementById("modalText").textContent = "删除工作文件「" + f.name + "」？是否先下载该文件？";
+    document.getElementById("modalMask").classList.add("show");
+  }
+  function closeModal() {
+    pendingDeleteId = null;
+    document.getElementById("modalMask").classList.remove("show");
+  }
+  document.getElementById("modalDownloadDelete").addEventListener("click", function () {
+    var id = pendingDeleteId; closeModal();
+    if (id) { downloadFile(id); deleteFile(id); }
+  });
+  document.getElementById("modalDelete").addEventListener("click", function () {
+    var id = pendingDeleteId; closeModal();
+    if (id) deleteFile(id);
+  });
+  document.getElementById("modalCancel").addEventListener("click", closeModal);
+  document.getElementById("modalMask").addEventListener("click", function (e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && pendingDeleteId) closeModal();
+  });
+
+  /* ---------------- 拖拽导入 ---------------- */
+  document.addEventListener("dragover", function (e) {
+    if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") >= 0) {
+      e.preventDefault();
+      document.body.classList.add("dragging-file");
+    }
+  });
+  document.addEventListener("dragleave", function (e) {
+    if (e.relatedTarget === null) document.body.classList.remove("dragging-file");
+  });
+  document.addEventListener("drop", function (e) {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    document.body.classList.remove("dragging-file");
+    var files = Array.prototype.slice.call(e.dataTransfer.files);
+    for (var i = 0; i < files.length; i++) {
+      (function (file) {
+        if (!/\.json$/i.test(file.name)) { setMsg("仅支持 .json 文件：" + escHtml(file.name), "err"); return; }
+        var reader = new FileReader();
+        reader.onload = function () { importJsonText(reader.result, file.name); };
+        reader.readAsText(file);
+      })(files[i]);
+    }
+  });
+
+  window.addEventListener("resize", render);
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      render();
+      if (!sizeReady) return;
+      var h = Math.round(chart.clientHeight);
+      if (h > 0 && h !== state.chartH) { state.chartH = h; save(); }
+    }).observe(chart);
+  }
+
+  /* ---------------- init ---------------- */
+  load();
+  chart.style.height = state.chartH + "px";
+  applyStateToInputs();
+  render();
+  renderTable();
+  renderTabs();
+  sizeReady = true;
+})();
+</script>
+</body>
+</html>
