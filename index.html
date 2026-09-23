@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+(function () {
+  var t = null;
+  try { t = localStorage.getItem("powersim-theme"); } catch (e) {}
+  if (t !== "light" && t !== "dark") {
+    t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
 <title>马力机模拟器</title>
 <style>
   * { box-sizing: border-box; }
@@ -13,12 +23,22 @@
   }
   .app { display: flex; flex-direction: column; min-height: 100vh; }
   header {
-    padding: 11px 18px; background: #0f172a; color: #fff;
+    padding: 11px 18px; background: #ffffff; color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
     display: flex; align-items: baseline; gap: 12px; flex: none;
     position: sticky; top: 0; z-index: 5;
   }
   header h1 { font-size: 15px; margin: 0; font-weight: 600; }
-  header .sub { font-size: 12px; color: #94a3b8; }
+  header .sub { font-size: 12px; color: #64748b; }
+  .theme-toggle {
+    margin-left: auto; align-self: center;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 30px; padding: 0;
+    border: 1px solid #cbd5e1; border-radius: 8px;
+    background: transparent; color: #0f172a; cursor: pointer;
+  }
+  .theme-toggle:hover { background: #f1f5f9; }
+  .theme-toggle .mi { width: 18px; height: 18px; }
   .workspace { padding: 14px; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; }
   .sidebar {
     width: 210px; flex: none; display: flex; flex-direction: column; gap: 8px;
@@ -65,6 +85,14 @@
   .mi-delete {
     -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAeklEQVR4AezPwQkAIAwEQTu2/1e0BCGoJMzC/W+GJLVp7sXhZuXz3xDxePkAANSzuDwAgGqAVIUAAAAAAAAAAAAAAAAAAABrn2nYob9ODw/spqEHZtPDAwZA/JsGjn8PxDIMdAIG0Jj4TCWHrwdiBYYhB0bBKBgFowAAjZ/e6L/vh1sAAAAASUVORK5CYII=");
     mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAeklEQVR4AezPwQkAIAwEQTu2/1e0BCGoJMzC/W+GJLVp7sXhZuXz3xDxePkAANSzuDwAgGqAVIUAAAAAAAAAAAAAAAAAAABrn2nYob9ODw/spqEHZtPDAwZA/JsGjn8PxDIMdAIG0Jj4TCWHrwdiBYYhB0bBKBgFowAAjZ/e6L/vh1sAAAAASUVORK5CYII=");
+  }
+  .mi-moon {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABlUlEQVR4Ae2YgWbDUBiFg2IYBgiGoQigGKDYewwDDHABwzDsAe4j7AGGYQ+xByiCoRiCYQiKITu4CCbHzWl2xHL4ENr2fEna+98Uw1lSgXLO5RtQ+yT08l3CLyGU90vo5f0SSnm/hFA+gme3RDeSmN6/6kvkI0YsX+gSavTyqoQWoTyR8AnweL9vEShBAK9gn6jTcQDncxB4GrinDyCCU68AzzX4JityNbVAJX7gLfmHaUBJBMpjjwe5iUTijQjUfQl9tsnPGfgiEjdFijA7CeX1q7Ajix2V4OW1bEBHWAsSpLyeEy6QbqOREry8ng8icAeKsRJb0P7ywnBEgZoI3Gf8fpreGvJnEp/sFhLKTy5xATrCRig/uUQg5fdC+cklVuCdCISc8pLEBGe/TpIppHyuhCiwJRNpCyoyC1WucfoKtGQS3Xr2A3zVfSBn/mVgZ2YXWINHsOtdgUM6juDy/27qFwFO0PcGXgEmEefycDfo5U0CZDwwCOizkz7bmCX08n4JvbxfQi9vldDLGyX08k4JUn7JDwZ5qUeUfFakAAAAAElFTkSuQmCC");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABlUlEQVR4Ae2YgWbDUBiFg2IYBgiGoQigGKDYewwDDHABwzDsAe4j7AGGYQ+xByiCoRiCYQiKITu4CCbHzWl2xHL4ENr2fEna+98Uw1lSgXLO5RtQ+yT08l3CLyGU90vo5f0SSnm/hFA+gme3RDeSmN6/6kvkI0YsX+gSavTyqoQWoTyR8AnweL9vEShBAK9gn6jTcQDncxB4GrinDyCCU68AzzX4JityNbVAJX7gLfmHaUBJBMpjjwe5iUTijQjUfQl9tsnPGfgiEjdFijA7CeX1q7Ajix2V4OW1bEBHWAsSpLyeEy6QbqOREry8ng8icAeKsRJb0P7ywnBEgZoI3Gf8fpreGvJnEp/sFhLKTy5xATrCRig/uUQg5fdC+cklVuCdCISc8pLEBGe/TpIppHyuhCiwJRNpCyoyC1WucfoKtGQS3Xr2A3zVfSBn/mVgZ2YXWINHsOtdgUM6juDy/27qFwFO0PcGXgEmEefycDfo5U0CZDwwCOizkz7bmCX08n4JvbxfQi9vldDLGyX08k4JUn7JDwZ5qUeUfFakAAAAAElFTkSuQmCC");
+  }
+  .mi-sun {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACN0lEQVR4Ae2YAYQCQRSGD4uwCIdFWIQFHAACQgAIAAEChAAQIMAgQIAQDuEAARYhHA6HEBYBQjiEvR+D8dt95SmzQ48Peqr/a+aN2d5eJVcGkpDDn8AvSEINX1qCkuDwLBFkeJYIMjxLBBHegE/fEqUSY98fORIavAgYYIskAhDg8CzhUUAfniW8Cjy1fAvEYAhWYAeOlhwswQC0mijQAhNwBuUNCjACUVMEErBTDOcXiH0LJKAApZJvED9TIBM+MAb7iv4ZzEEPpJY+WIC/mpWIBIHkUdcDFphV9DagDeqqA3JQEiMW0F875PDG2ToX6q3BPRVVSBTO6aS5O90f3taYeifayx2wBD92nxvQpj5vp4EjqJWQwzu1pf7U6aU1x+mRJBbUhzBKLSGH5+KTp+v0NndeNfrUywFKISGFVxytZ+nYpJWiFUIpJXo8lJaJQuAiPY3RHPAgV5WxfZ65DKB0Erxanbr5EPZ5j3o7dXiFRE79sdP7AFdQEmcSnVN/pQ6vkJhS7wAiktiCiw2+AanTb1fMylAdXiGRgqs48HJtKlYnVoRXSMi/kqGV4IrBWlpdRXhZQhB4Bwfu29fGtN+7YFpzVO9ASxDInnmdztxVUlCAxPcDTUYrcS97Du9FwNlOhga7jguYgbiJD/UpmIKc9nsBtmAMEv33vf5WuckE3CrT9L8WJ/rw/gVYQh/ekwBJcHgPAg+4Oz3sbuNFIozwJBFmeJIIMzxJhBmeJAIMTxJy+Ff9AxJgGTQUQOB/AAAAAElFTkSuQmCC");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACN0lEQVR4Ae2YAYQCQRSGD4uwCIdFWIQFHAACQgAIAAEChAAQIMAgQIAQDuEAARYhHA6HEBYBQjiEvR+D8dt95SmzQ48Peqr/a+aN2d5eJVcGkpDDn8AvSEINX1qCkuDwLBFkeJYIMjxLBBHegE/fEqUSY98fORIavAgYYIskAhDg8CzhUUAfniW8Cjy1fAvEYAhWYAeOlhwswQC0mijQAhNwBuUNCjACUVMEErBTDOcXiH0LJKAApZJvED9TIBM+MAb7iv4ZzEEPpJY+WIC/mpWIBIHkUdcDFphV9DagDeqqA3JQEiMW0F875PDG2ToX6q3BPRVVSBTO6aS5O90f3taYeifayx2wBD92nxvQpj5vp4EjqJWQwzu1pf7U6aU1x+mRJBbUhzBKLSGH5+KTp+v0NndeNfrUywFKISGFVxytZ+nYpJWiFUIpJXo8lJaJQuAiPY3RHPAgV5WxfZ65DKB0Erxanbr5EPZ5j3o7dXiFRE79sdP7AFdQEmcSnVN/pQ6vkJhS7wAiktiCiw2+AanTb1fMylAdXiGRgqs48HJtKlYnVoRXSMi/kqGV4IrBWlpdRXhZQhB4Bwfu29fGtN+7YFpzVO9ASxDInnmdztxVUlCAxPcDTUYrcS97Du9FwNlOhga7jguYgbiJD/UpmIKc9nsBtmAMEv33vf5WuckE3CrT9L8WJ/rw/gVYQh/ekwBJcHgPAg+4Oz3sbuNFIozwJBFmeJIIMzxJhBmeJAIMTxJy+Ff9AxJgGTQUQOB/AAAAAElFTkSuQmCC");
   }
   .sidebar-actions { display: flex; gap: 6px; }
   .sidebar-actions button {
@@ -214,6 +242,74 @@
   .cross-label-ps { fill: #ea580c; }
   .cross-label-nm { fill: #2563eb; }
   .cross-label-rpm { fill: #0f172a; font-weight: 600; }
+
+  /* ---------------- 夜间主题 ---------------- */
+  :root { color-scheme: light; }
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="dark"] body { color: #e2e8f0; background: #0b1220; }
+  html[data-theme="dark"] header { background: #020617; color: #f1f5f9; border-bottom-color: #1e293b; }
+  html[data-theme="dark"] header .sub { color: #94a3b8; }
+  html[data-theme="dark"] .theme-toggle { border-color: #334155; color: #e2e8f0; }
+  html[data-theme="dark"] .theme-toggle:hover { background: #1e293b; }
+  html[data-theme="dark"] .tab-item { background: #111827; border-color: #1e293b; }
+  html[data-theme="dark"] .tab-item:hover { border-color: #334155; }
+  html[data-theme="dark"] .tab-item.active { background: #1e3a5f; border-color: #3b82f6; }
+  html[data-theme="dark"] .tab-rename { background: #111827; color: #e2e8f0; border-color: #3b82f6; }
+  html[data-theme="dark"] .tab-btn { color: #94a3b8; }
+  html[data-theme="dark"] .tab-btn:hover { background: #1e293b; color: #e2e8f0; }
+  html[data-theme="dark"] .sidebar-actions button { background: #111827; border-color: #334155; color: #cbd5e1; }
+  html[data-theme="dark"] #chart { background: #0f172a; border-color: #1e293b; }
+  html[data-theme="dark"] #chart::-webkit-resizer {
+    background: linear-gradient(135deg, transparent 0 50%, #64748b 50% 60%, transparent 60% 70%, #64748b 70% 80%, transparent 80%);
+  }
+  html[data-theme="dark"] .card { background: #111827; border-color: #1e293b; }
+  html[data-theme="dark"] .modal { background: #111827; }
+  html[data-theme="dark"] .modal p { color: #e2e8f0; }
+  html[data-theme="dark"] .tip { background: rgba(2,6,23,.95); color: #e2e8f0; }
+  html[data-theme="dark"] textarea { background: #111827; color: #e2e8f0; border-color: #334155; }
+  html[data-theme="dark"] button { background: #111827; border-color: #334155; color: #e2e8f0; }
+  html[data-theme="dark"] button:hover { background: #1e293b; }
+  html[data-theme="dark"] button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+  html[data-theme="dark"] button.primary:hover { background: #1d4ed8; }
+  html[data-theme="dark"] button.danger { color: #f87171; border-color: #7f1d1d; }
+  html[data-theme="dark"] #psMin, html[data-theme="dark"] #psMax,
+  html[data-theme="dark"] #rpmMin, html[data-theme="dark"] #rpmMax,
+  html[data-theme="dark"] #snapStep { background: #111827; color: #e2e8f0; border-color: #334155; }
+  html[data-theme="dark"] label.pf { color: #94a3b8; }
+  html[data-theme="dark"] label.pf input, html[data-theme="dark"] label.pf select {
+    background: #111827; border-color: #334155; color: #e2e8f0;
+  }
+  html[data-theme="dark"] .prompt-out { background: #0b1220; border-color: #334155; color: #e2e8f0; }
+  html[data-theme="dark"] h2.section { color: #94a3b8; }
+  html[data-theme="dark"] th, html[data-theme="dark"] td { border-bottom-color: #1e293b; }
+  html[data-theme="dark"] th { color: #94a3b8; }
+  html[data-theme="dark"] input.cell { color: #e2e8f0; }
+  html[data-theme="dark"] input.cell:hover { border-color: #334155; }
+  html[data-theme="dark"] input.cell:focus { background: #0b1220; border-color: #3b82f6; }
+  html[data-theme="dark"] button.x { color: #94a3b8; }
+  html[data-theme="dark"] button.x:hover { color: #f87171; }
+  html[data-theme="dark"] .muted, html[data-theme="dark"] .hint { color: #64748b; }
+  html[data-theme="dark"] .msg.ok { color: #4ade80; }
+  html[data-theme="dark"] .msg.err { color: #f87171; }
+  html[data-theme="dark"] body.dragging-file::after { background: rgba(37,99,235,.14); color: #93c5fd; }
+  html[data-theme="dark"] .plot-bg { fill: #0f172a; }
+  html[data-theme="dark"] .grid line { stroke: #1e293b; }
+  html[data-theme="dark"] .axis line { stroke: #334155; }
+  html[data-theme="dark"] .axis text { fill: #94a3b8; }
+  html[data-theme="dark"] .axis-title { fill: #cbd5e1; }
+  html[data-theme="dark"] .curve-nm { stroke: #60a5fa; }
+  html[data-theme="dark"] .curve-ps { stroke: #fb923c; }
+  html[data-theme="dark"] .handle-nm { fill: #0f172a; stroke: #60a5fa; }
+  html[data-theme="dark"] .handle-ps { fill: #0f172a; stroke: #fb923c; }
+  html[data-theme="dark"] .handle-g:hover .handle { fill: #1e3a5f; }
+  html[data-theme="dark"] .legend text { fill: #cbd5e1; }
+  html[data-theme="dark"] .peak-line { stroke: #64748b; }
+  html[data-theme="dark"] .peak-label, html[data-theme="dark"] .cross-label { stroke: #0f172a; }
+  html[data-theme="dark"] .cross-label-rpm { fill: #e2e8f0; }
+  html[data-theme="dark"] .cross-line { stroke: #cbd5e1; }
+  html[data-theme="dark"] .cross-dot { stroke: #0f172a; }
+  html[data-theme="dark"] .peak-label-ps, html[data-theme="dark"] .cross-label-ps, html[data-theme="dark"] .cross-dot-ps { fill: #fb923c; }
+  html[data-theme="dark"] .peak-label-nm, html[data-theme="dark"] .cross-label-nm, html[data-theme="dark"] .cross-dot-nm { fill: #60a5fa; }
 </style>
 </head>
 <body>
@@ -221,6 +317,7 @@
   <header>
     <h1>马力机模拟器</h1>
     <span class="sub">公制马力 PS · 1 PS = 735.5 W · T = 7023.5 × PS / rpm</span>
+    <button id="btnTheme" class="theme-toggle" type="button" title="切换日间/夜间"><span class="mi" id="themeIcon"></span></button>
   </header>
   <div class="workspace">
     <aside class="sidebar">
@@ -1397,6 +1494,25 @@
       })(files[i]);
     }
   });
+
+  /* ---------------- 日间 / 夜间主题 ---------------- */
+  var THEME_KEY = "powersim-theme";
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    var icon = document.getElementById("themeIcon");
+    var btn = document.getElementById("btnTheme");
+    if (icon) icon.className = "mi " + (t === "dark" ? "mi-sun" : "mi-moon");
+    if (btn) btn.title = (t === "dark" ? "切换到日间模式" : "切换到夜间模式");
+  }
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+  document.getElementById("btnTheme").addEventListener("click", function () {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+  applyTheme(currentTheme());
 
   window.addEventListener("resize", render);
   if (window.ResizeObserver) {
