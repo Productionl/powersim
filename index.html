@@ -1155,42 +1155,52 @@
     var engine = (pmEngineEl.value || "").trim() || "未指定";
     var stage = pmStageEl.value;
     var induction = INDUCTION_TEXT[pmInductionEl.value] || pmInductionEl.value;
+    var drive = pmDriveEl.value;
     var comp = (pmCompEl.value || "").trim();
-    var lines = [];
-    lines.push("你是一名发动机性能数据专家。请根据下面的发动机配置，估算一条真实可信的发动机外特性曲线，并以纯数据点行的形式输出。");
-    lines.push("");
     var wheel = isWheelOutput();
-    lines.push("【发动机配置】");
-    lines.push("- 发动机型号：" + engine);
-    lines.push("- 进气形式：" + induction);
-    lines.push("- 改装阶段：" + stage);
-    if (wheel) lines.push("- 驱动形式：" + pmDriveEl.value);
-    if (induction.indexOf("自然吸气") < 0) {
-      lines.push("- 增压部件：" + (comp || "未指定（按该阶段常见配置估算）"));
-    }
-    lines.push("");
-    lines.push("【马力估算方式】");
-    if (wheel) {
-      lines.push("1. 先根据发动机配置估算机头马力（曲轴马力）。");
-      lines.push("2. 再按驱动形式换算为轮上马力：");
-      lines.push("- 前驱 FWD：轮上马力 ≈ 机头马力 × 80–88%");
-      lines.push("- 后驱 RWD：轮上马力 ≈ 机头马力 × 75–85%");
-      lines.push("- 四驱 AWD/4WD：轮上马力 ≈ 机头马力 × 65–80%");
-      lines.push("3. 本次驱动形式为 " + pmDriveEl.value + "，请按对应区间取值换算。");
-      lines.push("4. 最终输出的功率必须是轮上马力（WHP），不要输出机头/曲轴马力。");
-    } else {
-      lines.push("所有功率按机头马力（曲轴马力）估算并输出，不要换算为轮上马力。");
-    }
-    lines.push("");
-    lines.push("【输出要求】");
-    lines.push("1. 只输出数据点，不要任何解释、标题、单位说明、代码块或多余文字。");
-    lines.push("2. 第一行必须是 0@1（即 0 PS @ 1 rpm），其余每行格式为：功率PS@转速rpm，例如：150@3000");
-    lines.push("3. 由你根据该配置自行决定合理的转速范围（低转 → 红线/断油点）与数据点数量（约 6~12 个）。");
-    lines.push("4. 数值符合物理规律。");
-    lines.push("5. 转速为整数，功率为整数或保留一位小数。");
-    return lines.join("\n");
-  }
 
+    var cfg = ["* 型号：" + engine, "* 进气形式：" + induction];
+    if (induction.indexOf("自然吸气") < 0) cfg.push("* 增压部件：" + (comp || "未指定"));
+    cfg.push("* 改装阶段：" + stage);
+    if (wheel) cfg.push("* 驱动形式：" + drive);
+
+    var powerRule = wheel
+      ? "最终只输出轮上马力 WHP：按驱动形式取固定传动效率（FWD 80–88%、RWD 75–85%、AWD 65–80%），整条曲线统一使用同一效率，WHP = 曲轴PS × 效率；不得混用曲轴与轮上数据。"
+      : "最终只输出曲轴马力（机头 PS），不做任何传动效率换算。";
+    var powerWord = wheel ? "轮上马力 WHP" : "曲轴马力（机头 PS）";
+
+    return `你是一名汽车发动机性能数据专家。请先通过互联网检索该发动机在当前配置下的真实公开性能数据，再建立一条物理自洽的外特性曲线。
+
+【配置】
+${cfg.join("\n")}
+
+【必须检索确定的真实参数】
+1. 最大功率及其对应转速（PS @ rpm）
+2. 最大扭矩及其对应转速（N·m @ rpm）
+3. 红线/断油转速
+4. 改装阶段合理的功率/扭矩范围
+5. 确认具体版本（年份/市场/变速箱），不同版本数据不得混用
+优先采用厂商官方、官方技术手册、权威媒体、专业测功机等相互印证的数据；冲突时取与当前型号/年份/市场/配置完全对应者，不得平均，不得为美观修改真实峰值。
+
+【物理关系】
+PS = 扭矩(N·m) × RPM ÷ 7023.5。先建立曲轴扭矩曲线，再据此计算功率；每个转速点都必须满足该关系。最大扭矩与最大功率通常不在同一转速，禁止强行对齐。
+
+【曲线要求】
+- 低转上升 → 峰值扭矩平台 → 高转衰减；峰值扭矩/功率必须与检索值及对应转速一致；
+- 覆盖低转至红线，必须包含峰值扭矩与峰值功率的精确转速点；
+- 禁止恒定扭矩、线性功率、随机平滑、峰值附近跳变或违反公式的数据。
+
+【输出功率类型】
+${powerRule}
+
+【输出格式（必须严格遵守）】
+只输出数据行，不要任何其他文字：
+- 第一行必须严格为：0@1
+- 其余每行严格为：功率PS@转速rpm（例如 150@6000）
+- 功率为整数或一位小数，转速为整数
+- 禁止任何单位、空格、解释、标题、来源、计算过程、Markdown、表格或代码块
+- 此处功率为最终结果（${powerWord}）`;
+  }
   function copyPrompt() {
     var text = buildPrompt();
     promptOutEl.value = text;
