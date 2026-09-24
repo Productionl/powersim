@@ -39,25 +39,31 @@
   }
   .theme-toggle:hover { background: #f1f5f9; }
   .theme-toggle .mi { width: 18px; height: 18px; }
-  .workspace { padding: 14px; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; }
+  .workspace { padding: 14px; display: block; }
   .sidebar {
-    width: 210px; flex: none; display: flex; flex-direction: column; gap: 8px;
-    position: sticky; top: 60px; max-height: calc(100vh - 74px); overflow: auto;
+    width: 100%; display: flex; flex-direction: row; align-items: center; gap: 8px;
+    flex-wrap: wrap; padding: 8px 14px;
+    background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    position: sticky; top: var(--header-h, 52px); z-index: 4;
   }
-  .main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-  #tabList { display: flex; flex-direction: column; gap: 6px; }
+  .main-col { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  #tabList {
+    display: flex; flex-direction: row; flex-wrap: nowrap; gap: 6px;
+    flex: 1 1 auto; min-width: 0; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; padding-bottom: 2px;
+  }
   .tab-item {
-    display: flex; align-items: center; gap: 4px; padding: 6px 8px;
+    display: flex; align-items: center; gap: 4px; padding: 6px 8px; flex: 0 0 auto;
     border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer;
   }
   .tab-item:hover { border-color: #cbd5e1; }
   .tab-item.active { border-color: #2563eb; background: #eff6ff; }
   .tab-name {
-    flex: 1; min-width: 0; font-size: 13px; padding-left: 2px;
+    min-width: 0; max-width: 170px; font-size: 13px; padding-left: 2px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .tab-rename {
-    flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 2px 4px;
+    flex: 1; min-width: 0; max-width: 170px; font: inherit; font-size: 13px; padding: 2px 4px;
     border: 1px solid #2563eb; border-radius: 4px; outline: none;
   }
   .tab-btn {
@@ -94,18 +100,34 @@
     -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACN0lEQVR4Ae2YAYQCQRSGD4uwCIdFWIQFHAACQgAIAAEChAAQIMAgQIAQDuEAARYhHA6HEBYBQjiEvR+D8dt95SmzQ48Peqr/a+aN2d5eJVcGkpDDn8AvSEINX1qCkuDwLBFkeJYIMjxLBBHegE/fEqUSY98fORIavAgYYIskAhDg8CzhUUAfniW8Cjy1fAvEYAhWYAeOlhwswQC0mijQAhNwBuUNCjACUVMEErBTDOcXiH0LJKAApZJvED9TIBM+MAb7iv4ZzEEPpJY+WIC/mpWIBIHkUdcDFphV9DagDeqqA3JQEiMW0F875PDG2ToX6q3BPRVVSBTO6aS5O90f3taYeifayx2wBD92nxvQpj5vp4EjqJWQwzu1pf7U6aU1x+mRJBbUhzBKLSGH5+KTp+v0NndeNfrUywFKISGFVxytZ+nYpJWiFUIpJXo8lJaJQuAiPY3RHPAgV5WxfZ65DKB0Erxanbr5EPZ5j3o7dXiFRE79sdP7AFdQEmcSnVN/pQ6vkJhS7wAiktiCiw2+AanTb1fMylAdXiGRgqs48HJtKlYnVoRXSMi/kqGV4IrBWlpdRXhZQhB4Bwfu29fGtN+7YFpzVO9ASxDInnmdztxVUlCAxPcDTUYrcS97Du9FwNlOhga7jguYgbiJD/UpmIKc9nsBtmAMEv33vf5WuckE3CrT9L8WJ/rw/gVYQh/ekwBJcHgPAg+4Oz3sbuNFIozwJBFmeJIIMzxJhBmeJAIMTxJy+Ff9AxJgGTQUQOB/AAAAAElFTkSuQmCC");
     mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACN0lEQVR4Ae2YAYQCQRSGD4uwCIdFWIQFHAACQgAIAAEChAAQIMAgQIAQDuEAARYhHA6HEBYBQjiEvR+D8dt95SmzQ48Peqr/a+aN2d5eJVcGkpDDn8AvSEINX1qCkuDwLBFkeJYIMjxLBBHegE/fEqUSY98fORIavAgYYIskAhDg8CzhUUAfniW8Cjy1fAvEYAhWYAeOlhwswQC0mijQAhNwBuUNCjACUVMEErBTDOcXiH0LJKAApZJvED9TIBM+MAb7iv4ZzEEPpJY+WIC/mpWIBIHkUdcDFphV9DagDeqqA3JQEiMW0F875PDG2ToX6q3BPRVVSBTO6aS5O90f3taYeifayx2wBD92nxvQpj5vp4EjqJWQwzu1pf7U6aU1x+mRJBbUhzBKLSGH5+KTp+v0NndeNfrUywFKISGFVxytZ+nYpJWiFUIpJXo8lJaJQuAiPY3RHPAgV5WxfZ65DKB0Erxanbr5EPZ5j3o7dXiFRE79sdP7AFdQEmcSnVN/pQ6vkJhS7wAiktiCiw2+AanTb1fMylAdXiGRgqs48HJtKlYnVoRXSMi/kqGV4IrBWlpdRXhZQhB4Bwfu29fGtN+7YFpzVO9ASxDInnmdztxVUlCAxPcDTUYrcS97Du9FwNlOhga7jguYgbiJD/UpmIKc9nsBtmAMEv33vf5WuckE3CrT9L8WJ/rw/gVYQh/ekwBJcHgPAg+4Oz3sbuNFIozwJBFmeJIIMzxJhBmeJAIMTxJy+Ff9AxJgGTQUQOB/AAAAAElFTkSuQmCC");
   }
-  .sidebar-actions { display: flex; gap: 6px; }
+  .mi-add {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACT0lEQVR4Ae3YAWTzQBjG8Q9BMQRFEBTDAMFQFAAYigKKoYChGIqgKODDMBQFFFAUwzAMxTAMUBRDUQxBUQy3PwYeizaXS7KRhx/Qi723e99c+69OnTrOEmKAKZZ4wfu3FRa4Rx9N/Ir4iLGCyeATTxiigdLTwAgJTE47DOChlFxhC+PYGm0UmhgGaVa4RRdttL510EOMtyNH6xrOc4Y5jEKCYcbGDDHGAUbhv+sjtUjZrQl82CbANLUIRxmnNF4HrtLFHkbkPk69lGZrwXUi7PS/nKexfXzoziNEUYmw1w2z7YeJPOiQcTeMyHKcjBjYNJdOiBFIMQVItLF3Wd/Yd3kfoAU42MAhTs7GwTQwIu/0e8JJiWThHo0KCgh1IqFpc11YgpRTgESvHX0czYMuqrAA3cx7HM2rLLqssAB9kS5wNHpVDvFTjGM/paO3Xfudq6aAlnzm/a8VoJNoi6PRC1VQYQFt+cyLzeiKKmzirs1If5RFvQoLuJVnTG1uofMKC1jZ3Ep1dCXwKiigCSNCkOzvgm4FBQwzvQMkM1m8gVdiAT4SWR/j5JzjU89fiQVoHybwketbUYKLEgroQDdvhMwJUr5g+ygqLeiLdIsGrHIDI1YFFRFiDSOukCszGLHGBVyljR2MiJE7Hp5hRIIBPAc/0x9gxBzOEkgROmK7GQtp4Bo7GKgFzuA0nh4nkWCOHiIEcr4v0cdSh4MYo9DcyB/gygd6KCUBpjqvLR30Z/oyc44ZtjAZbXCHAL8iHUzwiDdp0C1e8YAYERykTp06Xxr4T0+G24wvAAAAAElFTkSuQmCC");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAACT0lEQVR4Ae3YAWTzQBjG8Q9BMQRFEBTDAMFQFAAYigKKoYChGIqgKODDMBQFFFAUwzAMxTAMUBRDUQxBUQy3PwYeizaXS7KRhx/Qi723e99c+69OnTrOEmKAKZZ4wfu3FRa4Rx9N/Ir4iLGCyeATTxiigdLTwAgJTE47DOChlFxhC+PYGm0UmhgGaVa4RRdttL510EOMtyNH6xrOc4Y5jEKCYcbGDDHGAUbhv+sjtUjZrQl82CbANLUIRxmnNF4HrtLFHkbkPk69lGZrwXUi7PS/nKexfXzoziNEUYmw1w2z7YeJPOiQcTeMyHKcjBjYNJdOiBFIMQVItLF3Wd/Yd3kfoAU42MAhTs7GwTQwIu/0e8JJiWThHo0KCgh1IqFpc11YgpRTgESvHX0czYMuqrAA3cx7HM2rLLqssAB9kS5wNHpVDvFTjGM/paO3Xfudq6aAlnzm/a8VoJNoi6PRC1VQYQFt+cyLzeiKKmzirs1If5RFvQoLuJVnTG1uofMKC1jZ3Ep1dCXwKiigCSNCkOzvgm4FBQwzvQMkM1m8gVdiAT4SWR/j5JzjU89fiQVoHybwketbUYKLEgroQDdvhMwJUr5g+ygqLeiLdIsGrHIDI1YFFRFiDSOukCszGLHGBVyljR2MiJE7Hp5hRIIBPAc/0x9gxBzOEkgROmK7GQtp4Bo7GKgFzuA0nh4nkWCOHiIEcr4v0cdSh4MYo9DcyB/gygd6KCUBpjqvLR30Z/oyc44ZtjAZbXCHAL8iHUzwiDdp0C1e8YAYERykTp06Xxr4T0+G24wvAAAAAElFTkSuQmCC");
+  }
+  .mi-folder {
+    -webkit-mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAmElEQVR4Ae3PoQ2EABBEUUo4eQJxJVxnlEIBFICkAIpAIJBIJAKJWEajFkEYkj/J9/MKg/mNMcbYVzVqVHGxSj26Ui2Jo7aINnHQGrGqeDMizBpUrT5pgGlzFhHG1W8HDNcBzy9OAbhrAAAAAAAAAAAAAAAAAABgU2HalAH0xoAmA/ir3fD8qkql5RC92kyOd+pXnMYYY4wdFGkWofcq/WUAAAAASUVORK5CYII=");
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAmElEQVR4Ae3PoQ2EABBEUUo4eQJxJVxnlEIBFICkAIpAIJBIJAKJWEajFkEYkj/J9/MKg/mNMcbYVzVqVHGxSj26Ui2Jo7aINnHQGrGqeDMizBpUrT5pgGlzFhHG1W8HDNcBzy9OAbhrAAAAAAAAAAAAAAAAAABgU2HalAH0xoAmA/ir3fD8qkql5RC92kyOd+pXnMYYY4wdFGkWofcq/WUAAAAASUVORK5CYII=");
+  }
+  .sidebar-actions { display: flex; gap: 6px; flex: 0 0 auto; }
   .sidebar-actions button {
-    flex: 1; padding: 7px 4px; border: 1px dashed #cbd5e1; border-radius: 8px;
-    background: #fff; color: #475569; cursor: pointer; font-size: 12px;
+    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 32px; padding: 0; border: 1px dashed #cbd5e1; border-radius: 8px;
+    background: #fff; color: #475569; cursor: pointer;
   }
   .sidebar-actions button:hover { border-color: #2563eb; color: #2563eb; }
+  .chart-wrap { position: relative; }
   #chart {
     position: relative; width: 100%; height: 560px;
     min-height: 320px; background: #fff;
     border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;
-    resize: vertical;
   }
+  .chart-resizer {
+    position: absolute; right: 2px; bottom: 2px; width: 28px; height: 28px;
+    cursor: ns-resize; touch-action: none; z-index: 6; border-bottom-right-radius: 8px;
+    background:
+      linear-gradient(135deg, transparent 0 55%, #94a3b8 55% 65%, transparent 65% 74%, #94a3b8 74% 84%, transparent 84%);
+  }
+  body.resizing { user-select: none; cursor: ns-resize; }
   .modal-mask {
     position: fixed; inset: 0; background: rgba(15,23,42,.45);
     display: none; align-items: center; justify-content: center; z-index: 50;
@@ -124,11 +146,6 @@
     background: rgba(37,99,235,.06); color: #1d4ed8; font-size: 15px; font-weight: 600;
     display: flex; align-items: center; justify-content: center;
     pointer-events: none; z-index: 60;
-  }
-  #chart::-webkit-resizer {
-    background:
-      linear-gradient(135deg, transparent 0 50%, #94a3b8 50% 60%, transparent 60% 70%, #94a3b8 70% 80%, transparent 80%);
-    border-radius: 0 0 8px 0;
   }
   .panel {
     width: 100%; display: grid; align-items: start; gap: 14px;
@@ -244,8 +261,9 @@
   .cross-label-rpm { fill: #0f172a; font-weight: 600; }
 
   /* ---------------- 夜间主题（灰色） ---------------- */
-  :root { color-scheme: light; }
+  :root { color-scheme: light; --header-h: 52px; }
   html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="dark"] .sidebar { background: #171717; border-bottom-color: #333333; }
   html[data-theme="dark"] body { color: #e5e5e5; background: #171717; }
   html[data-theme="dark"] header { background: #0f0f0f; color: #f5f5f5; border-bottom-color: #333333; }
   html[data-theme="dark"] header .sub { color: #a3a3a3; }
@@ -259,8 +277,8 @@
   html[data-theme="dark"] .tab-btn:hover { background: #333333; color: #e5e5e5; }
   html[data-theme="dark"] .sidebar-actions button { background: #262626; border-color: #525252; color: #d4d4d4; }
   html[data-theme="dark"] #chart { background: #1f1f1f; border-color: #404040; }
-  html[data-theme="dark"] #chart::-webkit-resizer {
-    background: linear-gradient(135deg, transparent 0 50%, #737373 50% 60%, transparent 60% 70%, #737373 70% 80%, transparent 80%);
+  html[data-theme="dark"] .chart-resizer {
+    background: linear-gradient(135deg, transparent 0 55%, #737373 55% 65%, transparent 65% 74%, #737373 74% 84%, transparent 84%);
   }
   html[data-theme="dark"] .card { background: #262626; border-color: #404040; }
   html[data-theme="dark"] .modal { background: #262626; }
@@ -310,6 +328,15 @@
   html[data-theme="dark"] .cross-dot { stroke: #1f1f1f; }
   html[data-theme="dark"] .peak-label-ps, html[data-theme="dark"] .cross-label-ps, html[data-theme="dark"] .cross-dot-ps { fill: #fb923c; }
   html[data-theme="dark"] .peak-label-nm, html[data-theme="dark"] .cross-label-nm, html[data-theme="dark"] .cross-dot-nm { fill: #60a5fa; }
+
+  /* ---------------- 移动端适配 ---------------- */
+  @media (max-width: 640px) {
+    header .sub { display: none; }
+    .workspace { padding: 10px; }
+    .sidebar { padding: 8px 10px; }
+    .tab-name, .tab-rename { max-width: 120px; }
+    .panel { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -319,17 +346,20 @@
     <span class="sub">公制马力 PS · 1 PS = 735.5 W · T = 7023.5 × PS / rpm</span>
     <button id="btnTheme" class="theme-toggle" type="button" title="切换日间/夜间"><span class="mi" id="themeIcon"></span></button>
   </header>
+  <aside class="sidebar">
+    <div id="tabList"></div>
+    <div class="sidebar-actions">
+      <button id="btnNewFile" type="button" title="新建工作文件"><span class="mi mi-add"></span></button>
+      <button id="btnOpenFile" type="button" title="打开已有文件"><span class="mi mi-folder"></span></button>
+    </div>
+    <input type="file" id="fileInput" accept=".json,application/json" multiple hidden>
+  </aside>
   <div class="workspace">
-    <aside class="sidebar">
-      <div id="tabList"></div>
-      <div class="sidebar-actions">
-        <button id="btnNewFile">新建工作文件</button>
-        <button id="btnOpenFile">打开已有文件</button>
-      </div>
-      <input type="file" id="fileInput" accept=".json,application/json" multiple hidden>
-    </aside>
     <div class="main-col">
+    <div class="chart-wrap">
     <div id="chart"></div>
+    <div id="chartResizer" class="chart-resizer" title="拖动调整高度"></div>
+    </div>
     <aside class="panel">
       <section class="card">
       <h2 class="section">输入数据</h2>
@@ -1514,7 +1544,44 @@
   });
   applyTheme(currentTheme());
 
-  window.addEventListener("resize", render);
+  function setHeaderH() {
+    var h = document.querySelector("header");
+    if (h) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
+  }
+
+  /* ---------------- 图表高度拖拽手柄（兼容 iOS Safari） ---------------- */
+  (function initChartResize() {
+    var r = document.getElementById("chartResizer");
+    if (!r) return;
+    var dragging = false, startY = 0, startH = 0, pid = null, MIN = 320;
+    function down(e) {
+      dragging = true; startY = e.clientY; startH = chart.clientHeight; pid = e.pointerId;
+      if (r.setPointerCapture) { try { r.setPointerCapture(pid); } catch (err) {} }
+      document.body.classList.add("resizing");
+      e.preventDefault();
+    }
+    function move(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      var h = Math.max(MIN, Math.round(startH + (e.clientY - startY)));
+      if (h !== state.chartH) { state.chartH = h; chart.style.height = h + "px"; render(); }
+    }
+    function up() {
+      if (!dragging) return;
+      dragging = false;
+      if (r.releasePointerCapture && pid !== null) { try { r.releasePointerCapture(pid); } catch (err) {} }
+      pid = null;
+      document.body.classList.remove("resizing");
+      var h = Math.round(chart.clientHeight);
+      if (h > 0) { state.chartH = h; save(); }
+    }
+    r.addEventListener("pointerdown", down);
+    r.addEventListener("pointermove", move);
+    r.addEventListener("pointerup", up);
+    r.addEventListener("pointercancel", up);
+  })();
+
+  window.addEventListener("resize", function () { setHeaderH(); render(); });
   if (window.ResizeObserver) {
     new ResizeObserver(function () {
       render();
@@ -1528,6 +1595,7 @@
   load();
   chart.style.height = state.chartH + "px";
   applyStateToInputs();
+  setHeaderH();
   render();
   renderTable();
   renderTabs();
