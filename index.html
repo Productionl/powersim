@@ -26,7 +26,6 @@
     padding: 11px 18px; background: #ffffff; color: #0f172a;
     border-bottom: 1px solid #e2e8f0;
     display: flex; align-items: baseline; gap: 12px; flex: none;
-    position: sticky; top: 0; z-index: 5;
   }
   header h1 { font-size: 15px; margin: 0; font-weight: 600; }
   header .sub { font-size: 12px; color: #64748b; }
@@ -44,7 +43,7 @@
     width: 100%; display: flex; flex-direction: row; align-items: center; gap: 8px;
     flex-wrap: wrap; padding: 8px 14px;
     background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-    position: sticky; top: var(--header-h, 52px); z-index: 4;
+    position: sticky; top: 0; z-index: 4;
   }
   .main-col { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
   #tabList {
@@ -261,7 +260,7 @@
   .cross-label-rpm { fill: #0f172a; font-weight: 600; }
 
   /* ---------------- 夜间主题（灰色） ---------------- */
-  :root { color-scheme: light; --header-h: 52px; }
+  :root { color-scheme: light; }
   html[data-theme="dark"] { color-scheme: dark; }
   html[data-theme="dark"] .sidebar { background: #171717; border-bottom-color: #333333; }
   html[data-theme="dark"] body { color: #e5e5e5; background: #171717; }
@@ -1544,11 +1543,6 @@
   });
   applyTheme(currentTheme());
 
-  function setHeaderH() {
-    var h = document.querySelector("header");
-    if (h) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
-  }
-
   /* ---------------- 图表高度拖拽手柄（兼容 iOS Safari） ---------------- */
   (function initChartResize() {
     var r = document.getElementById("chartResizer");
@@ -1581,7 +1575,7 @@
     r.addEventListener("pointercancel", up);
   })();
 
-  window.addEventListener("resize", function () { setHeaderH(); render(); });
+  window.addEventListener("resize", render);
   if (window.ResizeObserver) {
     new ResizeObserver(function () {
       render();
@@ -1595,7 +1589,6 @@
   load();
   chart.style.height = state.chartH + "px";
   applyStateToInputs();
-  setHeaderH();
   render();
   renderTable();
   renderTabs();
