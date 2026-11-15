@@ -1125,70 +1125,127 @@
   });
 
   /* ---------------- 生成提示词 ---------------- */
-  var INDUCTION_TEXT = {
-    "自吸": "自然吸气（NA）",
-    "涡轮": "单涡轮增压",
-    "机械增压": "机械增压",
-    "双涡轮": "双涡轮增压",
-    "双增压": "涡轮+机械双增压"
-  };
-  var pmEngineEl = document.getElementById("pmEngine");
-  var pmStageEl = document.getElementById("pmStage");
-  var pmInductionEl = document.getElementById("pmInduction");
-  var pmOutputEl = document.getElementById("pmOutput");
-  var pmDriveEl = document.getElementById("pmDrive");
-  var pmDriveWrapEl = document.getElementById("pmDriveWrap");
-  var pmCompEl = document.getElementById("pmComp");
-  var pmCompWrapEl = document.getElementById("pmCompWrap");
-  var promptOutEl = document.getElementById("promptOut");
+var INDUCTION_TEXT = {
+  "自吸": "自然吸气（NA）",
+  "涡轮": "单涡轮增压",
+  "机械增压": "机械增压",
+  "双涡轮": "双涡轮增压",
+  "双增压": "涡轮+机械双增压"
+};
+var pmEngineEl = document.getElementById("pmEngine");
+var pmStageEl = document.getElementById("pmStage");
+var pmInductionEl = document.getElementById("pmInduction");
+var pmOutputEl = document.getElementById("pmOutput");
+var pmDriveEl = document.getElementById("pmDrive");
+var pmDriveWrapEl = document.getElementById("pmDriveWrap");
+var pmCompEl = document.getElementById("pmComp");
+var pmCompWrapEl = document.getElementById("pmCompWrap");
+var promptOutEl = document.getElementById("promptOut");
 
-  function isWheelOutput() { return pmOutputEl.value.indexOf("轮上") >= 0; }
-  function syncVisibility() {
-    pmCompWrapEl.style.display = (pmInductionEl.value === "自吸") ? "none" : "";
-    pmDriveWrapEl.style.display = isWheelOutput() ? "" : "none";
-  }
-  pmInductionEl.addEventListener("change", syncVisibility);
-  pmOutputEl.addEventListener("change", syncVisibility);
-  syncVisibility();
+function isWheelOutput() { return pmOutputEl.value.indexOf("轮上") >= 0; }
+function syncVisibility() {
+  pmCompWrapEl.style.display = (pmInductionEl.value === "自吸") ? "none" : "";
+  pmDriveWrapEl.style.display = isWheelOutput() ? "" : "none";
+}
+pmInductionEl.addEventListener("change", syncVisibility);
+pmOutputEl.addEventListener("change", syncVisibility);
+syncVisibility();
 
-  function buildPrompt() {
-    var engine = (pmEngineEl.value || "").trim() || "未指定";
-    var stage = pmStageEl.value;
-    var induction = INDUCTION_TEXT[pmInductionEl.value] || pmInductionEl.value;
-    var drive = pmDriveEl.value;
-    var comp = (pmCompEl.value || "").trim();
-    var wheel = isWheelOutput();
+function buildPrompt() {
+  var engine = (pmEngineEl.value || "").trim() || "未指定";
+  var stage = pmStageEl.value;
+  var induction = INDUCTION_TEXT[pmInductionEl.value] || pmInductionEl.value;
+  var drive = pmDriveEl.value;
+  var comp = (pmCompEl.value || "").trim();
+  var wheel = isWheelOutput();
 
-    var cfg = ["* 型号：" + engine, "* 进气形式：" + induction];
-    if (induction.indexOf("自然吸气") < 0) cfg.push("* 增压部件：" + (comp || "未指定"));
-    cfg.push("* 改装阶段：" + stage);
-    if (wheel) cfg.push("* 驱动形式：" + drive);
+  var cfg = ["* 型号：" + engine, "* 进气形式：" + induction];
+  if (induction.indexOf("自然吸气") < 0) cfg.push("* 增压部件：" + (comp || "未指定"));
+  cfg.push("* 改装阶段：" + stage);
+  if (wheel) cfg.push("* 驱动形式：" + drive);
 
-    var powerRule = wheel
-      ? "最终只输出轮上马力 WHP：按驱动形式取固定传动效率（FWD 80–88%、RWD 75–85%、AWD 65–80%），整条曲线统一使用同一效率，WHP = 曲轴PS × 效率；不得混用曲轴与轮上数据。"
-      : "最终只输出曲轴马力（机头 PS），不做任何传动效率换算。";
-    var powerWord = wheel ? "轮上马力 WHP" : "曲轴马力（机头 PS）";
+  var powerWord = wheel ? "轮上马力 WHP" : "曲轴马力（机头 PS）";
+  var powerRule = wheel
+    ? "最终输出轮上马力 WHP：整条曲线统一使用同一传动效率（FWD 80–88%、RWD 75–85%、AWD 65–80%），WHP = 曲轴PS × 效率。扭矩始终是曲轴扭矩，不得用 WHP 反推扭矩。"
+    : "最终输出曲轴马力（机头 PS），不做任何传动效率换算。";
 
-    return `你是一名汽车发动机性能数据专家。请先通过互联网检索该发动机在当前配置下的真实公开性能数据，再建立一条物理自洽的外特性曲线。
+  // 轮上口径下，反算公式要用曲轴口径；曲轴口径下直接用同一公式
+  var torqueCheckFormula = wheel
+    ? "曲轴PS(rpm) = 曲轴扭矩T(rpm) × rpm ÷ 7023.5；WHP(rpm) = 曲轴PS(rpm) × 效率"
+    : "PS(rpm) = T(rpm) × rpm ÷ 7023.5";
+
+  return `你是一名汽车发动机性能数据专家。请先通过互联网检索该发动机在当前配置下的真实公开性能数据，再建立一条物理自洽的外特性曲线。
+
+以下所有规则均为通用规则，具体数值、平台长度、起压转速、峰值位置、红线转速必须由该发动机的真实公开数据决定，禁止套用任何其他发动机的形状或默认值。
 
 【配置】
 ${cfg.join("\n")}
 
 【必须检索确定的真实参数】
-1. 最大功率及其对应转速（PS @ rpm）
-2. 最大扭矩及其对应转速（N·m @ rpm）
+1. 原厂最大功率及其对应转速（PS @ rpm）
+2. 原厂最大扭矩及其对应转速（N·m @ rpm）
 3. 红线/断油转速
-4. 改装阶段合理的功率/扭矩范围
-5. 确认具体版本（年份/市场/变速箱），不同版本数据不得混用
+4. 该改装阶段合理的功率/扭矩范围（曲轴口径）
+5. 确认具体版本（年份/市场/变速箱/功率等级），不同版本数据不得混用。特别注意：同一车系常有多个功率等级（例如普通版/性能版/赛道版）、多个年份改款、多个市场调校，这些数据的峰值、转速、红线都可能不同，必须只取与当前配置完全对应者。若无法确认唯一版本，必须在内部标注并选择最匹配的一个，不得取平均。
 优先采用厂商官方、官方技术手册、权威媒体、专业测功机等相互印证的数据；冲突时取与当前型号/年份/市场/配置完全对应者，不得平均，不得为美观修改真实峰值。
 
-【物理关系】
-PS = 扭矩(N·m) × RPM ÷ 7023.5。先建立曲轴扭矩曲线，再据此计算功率；每个转速点都必须满足该关系。最大扭矩与最大功率通常不在同一转速，禁止强行对齐。
+【第一步：先确定目标峰值（N·m 与 ${powerWord}）】
+基于检索结果，先确定：
+- 目标最大扭矩 Tmax（N·m）及其转速 nT
+- 目标最大 ${powerWord} Pmax 及其转速 nP
+约束：
+- Tmax 必须落在该改装阶段真实合理的扭矩区间内；
+- nT 必须符合该发动机的真实物理特性（通常在中低转出现）；
+- nP 通常明显高于 nT，禁止为了让 Pmax 与 Tmax 对齐而改动真实峰值。
 
-【曲线要求】
-- 低转上升 → 峰值扭矩平台 → 高转衰减；峰值扭矩/功率必须与检索值及对应转速一致；
-- 覆盖低转至红线，必须包含峰值扭矩与峰值功率的精确转速点；
-- 禁止恒定扭矩、线性功率、随机平滑、峰值附近跳变或违反公式的数据。
+【第一步补充：数值可行性预检（进入第二步之前必须完成）】
+在确定 Tmax/nT 与 Pmax/nP 之后，必须先做一次数学自洽检查：
+- 计算 nP 处所需扭矩 T(nP) = Pmax × 7023.5 ÷ nP；
+- 若 T(nP) ≥ Tmax，说明 Pmax 与 Tmax 的组合在物理上不可能同时成立，必须回到第一步重新调整 Pmax 或 nP，直到 T(nP) < Tmax；
+- 计算 nT 处的功率 P(nT) = Tmax × nT ÷ 7023.5，该值必须严格小于 Pmax，否则 nT 实际上就是功率峰值点，与 nP 定义冲突，必须回到第一步重新调整 nT 或 nP；
+- 若以上任一条件不满足，禁止进入第二步；不得通过抬升任何转速点扭矩超过 Tmax 来"凑"峰值。
+- 轮上口径下，上述 Pmax 与 T(nP) 均使用曲轴口径参与预检，最后再按统一效率换算为 WHP。
+
+【第二步：先设计完整扭矩曲线 T(rpm)（关键，禁止跳过）】
+在内部（不输出）从怠速到红线逐段设计扭矩曲线，必须满足：
+- 低转扭矩符合该发动机真实特性（排量、缸数、增压类型、涡轮尺寸、配气机构）；
+- 扭矩从低转上升到 Tmax，并在 nT 精确达到 Tmax；
+- 过了 nT 后扭矩自然回落；
+- 任何转速点的扭矩都不得超过 Tmax；
+- 怠速转速（通常 700–1000 rpm，按具体发动机检索确认）扭矩应接近怠速负荷水平，低但非零；从怠速到起压转速之间的扭矩上升斜率必须符合该发动机的进气形式与涡轮尺寸。
+- 自吸发动机低转扭矩应线性建立；小惯量涡轮起压早、低转扭矩建立快；大涡轮/高转机起压晚、低转扭矩反而偏弱。禁止所有发动机套用同一条低转上升曲线。
+- 扭矩平台的长度与位置必须由该发动机的真实特性决定：小排量涡轮机通常有明显宽平台，大排量自吸通常为缓峰，高转性能机通常峰值靠后且平台窄。禁止为了美观人为缩短、拉长或做成对称驼峰；禁止无物理依据的恒定段、随机跳变、峰值附近突降。
+- 允许并鼓励出现符合真实特性的宽扭矩平台；判断标准是：该平台是否与原厂/同代同型发动机的公开扭矩曲线一致，而不是平台本身的长短。
+- 功率峰值必须是单点尖峰或极窄平台；过 nP 后功率必须自然回落。禁止宽幅功率平台（例如连续 1000 rpm 功率完全相同），禁止峰值附近出现锯齿或跳变。
+- 对高转性能机（如高转速自吸、大涡轮增压），功率峰值靠近红线；对小排量低转扭矩机，功率峰值通常早于红线。禁止所有发动机把功率峰值放在同一相对位置。
+- 相邻转速点之间的扭矩变化率必须平滑：500 rpm 间隔内扭矩变化不得超过 Tmax 的 15%；250 rpm 间隔内不得超过 Tmax 的 8%；禁止任何相邻点出现反向跳变（先升后降再升的锯齿）。
+- 扭矩曲线必须从怠速到红线单调分段：起压前缓慢上升、起压后快速上升至 nT、过 nT 后单调回落至红线；禁止在 nT 之前出现任何局部峰值，禁止在 nT 之后出现任何反弹峰值。
+
+【第三步：由扭矩反算功率】
+对每一个转速点：
+- ${torqueCheckFormula}
+每一点都必须满足该式，不允许先编功率再反推扭矩。
+
+【第四步：验证峰值】
+- 由 T(rpm) 反算出的功率最大值必须精确等于 Pmax，且出现在 nP；
+- 由功率反算的扭矩最大值必须精确等于 Tmax，且出现在 nT；
+- 如果反算功率峰值不在 nP，或数值不等于 Pmax，微调扭矩曲线的形状（不是改动 Tmax、nT、Pmax、nP）；
+- 绝对禁止为了凑 Pmax 而把任何转速点的扭矩抬到 Tmax 之上。
+
+【第五步：逐点自查（必须先内部完成，再输出）】
+在内部先构建一张验证表，至少包含：转速、扭矩 N·m、曲轴功率 PS、${wheel ? "轮上功率 WHP、" : ""}公式校验结果。
+逐点检查：
+- 每一点都满足 ${torqueCheckFormula}；
+- 所有点扭矩 ≤ Tmax；
+- 低转（约 1000–2000 rpm）扭矩不得出现明显高于 Tmax 或非物理的异常值；
+- 峰值功率 = Pmax 且出现在 nP；峰值扭矩 = Tmax 且出现在 nT；
+- 覆盖低转至红线，且包含 nP 与 nT 两个精确转速点。
+- 转速步进建议 500 rpm；低转段（怠速至起压转速附近）可加密到 250 rpm；nP 与 nT 必须作为输出数据行中的独立行出现，不得仅作为区间插值；若步进与 nP 或 nT 不重合，必须在该转速处额外插入数据行。
+- 红线转速必须按检索结果确定，不得套用默认值。
+- 若该发动机真实特性存在扭矩平台，平台内各点扭矩偏差不得超过 Tmax 的 ±2%，且平台起止转速需与原厂或权威测功机数据一致。
+- 峰值功率点 nP 与峰值扭矩点 nT 必须是不同的转速（除非检索明确显示该发动机两者重合）；禁止为对齐而改动真实峰值。
+- 输出前对最终数据行做一次全局校验：读取每一行的功率与转速，反算扭矩，确认 (a) 最大扭矩 = Tmax 且只在 nT 出现；(b) 最大功率 = Pmax 且只在 nP 出现；(c) 任意点扭矩 ≤ Tmax；(d) 相邻点变化率符合平滑要求；(e) nP 与 nT 均为输出数据行中的独立行。任一不通过则回到第二步重做。
+若任一检查不通过，回到第二步重新设计扭矩曲线，直到全部满足。
 
 【输出功率类型】
 ${powerRule}
@@ -1196,35 +1253,36 @@ ${powerRule}
 【输出格式（必须严格遵守）】
 只输出数据行，不要任何其他文字：
 - 第一行必须严格为：0@1
-- 其余每行严格为：功率PS@转速rpm（例如 150@6000）
+- 其余每行严格为：${wheel ? "功率WHP" : "功率PS"}@转速rpm（例如 150@6000）
 - 功率为整数或一位小数，转速为整数
 - 禁止任何单位、空格、解释、标题、来源、计算过程、Markdown、表格或代码块
 - 此处功率为最终结果（${powerWord}）`;
-  }
-  function copyPrompt() {
-    var text = buildPrompt();
-    promptOutEl.value = text;
-    promptOutEl.hidden = false;
-    var ok = function () {
-      setMsg("提示词已复制：粘贴给 AI，再把返回的数据行贴到上方输入框点「追加」即可", "ok");
-    };
-    var fallback = function () {
-      try {
-        promptOutEl.focus();
-        promptOutEl.select();
-        document.execCommand("copy");
-        ok();
-      } catch (e) {
-        setMsg("已生成提示词，请手动复制下方文本", "err");
-      }
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(ok, fallback);
-    } else {
-      fallback();
+}
+
+function copyPrompt() {
+  var text = buildPrompt();
+  promptOutEl.value = text;
+  promptOutEl.hidden = false;
+  var ok = function () {
+    setMsg("提示词已复制：粘贴给 AI，再把返回的数据行贴到上方输入框点「追加」即可", "ok");
+  };
+  var fallback = function () {
+    try {
+      promptOutEl.focus();
+      promptOutEl.select();
+      document.execCommand("copy");
+      ok();
+    } catch (e) {
+      setMsg("已生成提示词，请手动复制下方文本", "err");
     }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok, fallback);
+  } else {
+    fallback();
   }
-  document.getElementById("btnCopyPrompt").addEventListener("click", copyPrompt);
+}
+document.getElementById("btnCopyPrompt").addEventListener("click", copyPrompt);
 
   document.getElementById("snap").addEventListener("change", function (e) {
     state.snap = e.target.checked;
