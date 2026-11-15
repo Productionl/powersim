@@ -7,12 +7,14 @@
 - `index.html` — 唯一源文件（内联 CSS/JS；图标以 base64 PNG 内联为 CSS 遮罩）
 - `agent.md` — 本文件
 - `.nojekyll` — 空文件，关闭 GitHub Pages 的 Jekyll 处理
+- `CNAME` — 自定义域名 `powersim.caracter.cn`（GitHub Pages 读取，勿删）
 - `.git/` — 远程 `origin` = https://github.com/Productionl/powersim.git，分支 `main`
 
 ## 运行与调试
 - 直接用浏览器打开 `index.html`（`file://` 可用），无需构建、无第三方依赖。
 - 数据存于 localStorage，测试持久化时不要用无痕/隐私模式。
-- 线上地址：https://productionl.github.io/powersim/
+- 线上地址：https://powersim.caracter.cn/（GitHub Pages 默认地址 https://productionl.github.io/powersim/ 会 301 到自定义域名）
+- 自定义域名：`CNAME` 文件内容一行 `powersim.caracter.cn`；DNS 需配置 `powersim` 的 CNAME → `productionl.github.io`（子域不要加 A 记录）。Settings → Pages 中填同一个域名并勾选 Enforce HTTPS。
 
 ## 部署（GitHub Pages）
 - 站点源为 `main` 分支根目录（仓库公开）；push 到 `main` 后 1–2 分钟自动发布。
